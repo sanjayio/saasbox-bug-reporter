@@ -21,7 +21,7 @@ Add these two lines to your HTML, just before the closing `</body>` tag:
 
 ```html
 <!-- Using unpkg CDN -->
-<script src="https://unpkg.com/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js"></script>
+<script src="https://unpkg.com/saasbox-bug-reporter@1.0.1/dist/bug-reporter.min.js"></script>
 <script>
   BugReporter.init({
     apiEndpoint: 'https://saasbox.app/api/bug-reporter',
@@ -34,11 +34,11 @@ Add these two lines to your HTML, just before the closing `</body>` tag:
 **Alternative CDNs:**
 ```html
 <!-- jsDelivr (alternative CDN) -->
-<script src="https://cdn.jsdelivr.net/npm/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/saasbox-bug-reporter@1.0.1/dist/bug-reporter.min.js"></script>
 ```
 
 **Version Options:**
-- `@1.0.0` - Specific version (recommended for production)
+- `@1.0.1` - Specific version (recommended for production)
 - `@1.0` - Latest patch version (auto-updates 1.0.x)
 - `@1` - Latest minor version (auto-updates 1.x.x)
 - `@latest` - Always latest version (not recommended for production)

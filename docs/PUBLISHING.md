@@ -50,13 +50,13 @@ npm view bug-reporter-widget
 #### Step 1: Update Version
 
 ```bash
-# For bug fixes (1.0.0 → 1.0.1)
+# For bug fixes (1.0.1 → 1.0.1)
 npm version patch
 
-# For new features (1.0.0 → 1.1.0)
+# For new features (1.0.1 → 1.1.0)
 npm version minor
 
-# For breaking changes (1.0.0 → 2.0.0)
+# For breaking changes (1.0.1 → 2.0.0)
 npm version major
 ```
 
@@ -93,10 +93,10 @@ This will:
 npm view bug-reporter-widget
 
 # Wait 5 minutes, then test unpkg
-curl -I https://unpkg.com/bug-reporter-widget@1.0.0/dist/bug-reporter.min.js
+curl -I https://unpkg.com/bug-reporter-widget@1.0.1/dist/bug-reporter.min.js
 
 # Test jsDelivr
-curl -I https://cdn.jsdelivr.net/npm/bug-reporter-widget@1.0.0/dist/bug-reporter.min.js
+curl -I https://cdn.jsdelivr.net/npm/bug-reporter-widget@1.0.1/dist/bug-reporter.min.js
 ```
 
 ---
@@ -143,21 +143,21 @@ The GitHub Actions workflow will:
 
 Follow [semver.org](https://semver.org):
 
-- **MAJOR** (1.0.0 → 2.0.0): Breaking changes
-- **MINOR** (1.0.0 → 1.1.0): New features, backward compatible
-- **PATCH** (1.0.0 → 1.0.1): Bug fixes
+- **MAJOR** (1.0.1 → 2.0.0): Breaking changes
+- **MINOR** (1.0.1 → 1.1.0): New features, backward compatible
+- **PATCH** (1.0.1 → 1.0.1): Bug fixes
 
 ### Examples
 
 ```bash
 # Bug fix: Fixed screenshot not capturing
-npm version patch  # 1.0.0 → 1.0.1
+npm version patch  # 1.0.1 → 1.0.1
 
 # New feature: Added video recording
-npm version minor  # 1.0.0 → 1.1.0
+npm version minor  # 1.0.1 → 1.1.0
 
 # Breaking change: Changed API format
-npm version major  # 1.0.0 → 2.0.0
+npm version major  # 1.0.1 → 2.0.0
 ```
 
 ---
@@ -196,11 +196,11 @@ This shows:
 # Pack the package locally
 npm pack
 
-# This creates: bug-reporter-widget-1.0.0.tgz
+# This creates: bug-reporter-widget-1.0.1.tgz
 
 # Install in another project
 cd /path/to/test-project
-npm install /path/to/bug-reporter-widget-1.0.0.tgz
+npm install /path/to/bug-reporter-widget-1.0.1.tgz
 
 # Test it works
 ```
@@ -385,13 +385,13 @@ https://www.npmjs.com/package/bug-reporter-widget
 
 **unpkg CDN:**
 ```
-https://unpkg.com/bug-reporter-widget@1.0.0/dist/bug-reporter.min.js
+https://unpkg.com/bug-reporter-widget@1.0.1/dist/bug-reporter.min.js
 https://unpkg.com/bug-reporter-widget@latest/dist/bug-reporter.min.js
 ```
 
 **jsDelivr CDN:**
 ```
-https://cdn.jsdelivr.net/npm/bug-reporter-widget@1.0.0/dist/bug-reporter.min.js
+https://cdn.jsdelivr.net/npm/bug-reporter-widget@1.0.1/dist/bug-reporter.min.js
 https://cdn.jsdelivr.net/npm/bug-reporter-widget@latest/dist/bug-reporter.min.js
 ```
 

@@ -2,10 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.1/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-12-17
+## [1.0.1] - 2025-12-17
 
 ### Added
 - Initial release of Bug Reporter Widget
@@ -58,19 +58,19 @@ After each release, the widget is available at:
 
 **unpkg:**
 ```
-https://unpkg.com/bug-reporter-widget@1.0.0/dist/bug-reporter.min.js
+https://unpkg.com/bug-reporter-widget@1.0.1/dist/bug-reporter.min.js
 ```
 
 **jsDelivr:**
 ```
-https://cdn.jsdelivr.net/npm/bug-reporter-widget@1.0.0/dist/bug-reporter.min.js
+https://cdn.jsdelivr.net/npm/bug-reporter-widget@1.0.1/dist/bug-reporter.min.js
 ```
 
 **Version Aliases:**
 - `@latest` - Always the newest version
 - `@1` - Latest 1.x.x version
 - `@1.0` - Latest 1.0.x version
-- `@1.0.0` - Specific version (recommended for production)
+- `@1.0.1` - Specific version (recommended for production)
 
 ---
 

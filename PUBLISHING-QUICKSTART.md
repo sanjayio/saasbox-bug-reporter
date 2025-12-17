@@ -71,16 +71,16 @@ That's it! Your package will be live on NPM and automatically available on unpkg
 
 ```bash
 # Test unpkg
-curl -I https://unpkg.com/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js
+curl -I https://unpkg.com/saasbox-bug-reporter@1.0.1/dist/bug-reporter.min.js
 
 # Test jsDelivr
-curl -I https://cdn.jsdelivr.net/npm/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js
+curl -I https://cdn.jsdelivr.net/npm/saasbox-bug-reporter@1.0.1/dist/bug-reporter.min.js
 ```
 
 ### View Your Package
 
 - NPM: https://www.npmjs.com/package/saasbox-bug-reporter
-- unpkg: https://unpkg.com/browse/saasbox-bug-reporter@1.0.0/
+- unpkg: https://unpkg.com/browse/saasbox-bug-reporter@1.0.1/
 - jsDelivr: https://www.jsdelivr.com/package/npm/saasbox-bug-reporter
 
 ---
@@ -90,21 +90,21 @@ curl -I https://cdn.jsdelivr.net/npm/saasbox-bug-reporter@1.0.0/dist/bug-reporte
 ### Patch Release (Bug Fixes)
 
 ```bash
-npm version patch  # 1.0.0 → 1.0.1
+npm version patch  # 1.0.1 → 1.0.1
 npm publish
 ```
 
 ### Minor Release (New Features)
 
 ```bash
-npm version minor  # 1.0.0 → 1.1.0
+npm version minor  # 1.0.1 → 1.1.0
 npm publish
 ```
 
 ### Major Release (Breaking Changes)
 
 ```bash
-npm version major  # 1.0.0 → 2.0.0
+npm version major  # 1.0.1 → 2.0.0
 npm publish
 ```
 
@@ -148,7 +148,7 @@ Share these URLs with customers:
 ### Via CDN
 
 ```html
-<script src="https://unpkg.com/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js"></script>
+<script src="https://unpkg.com/saasbox-bug-reporter@1.0.1/dist/bug-reporter.min.js"></script>
 <script>
   BugReporter.init({
     apiEndpoint: 'https://saasbox.app/api/bug-reporter',
