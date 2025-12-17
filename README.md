@@ -1,4 +1,4 @@
-# Bug Reporter Widget
+# Saasbox Bug Reporter Widget
 
 A lightweight, embeddable JavaScript widget that helps SaaS customers report bugs easily. The widget captures screenshots, console logs, network activity, and system information automatically.
 
@@ -15,26 +15,48 @@ A lightweight, embeddable JavaScript widget that helps SaaS customers report bug
 
 ## Installation
 
-### 1. Build the Widget
+### Via CDN (Recommended)
 
-```bash
-cd bug-reporter-widget
-npm install
-npm run build
-```
-
-This creates `dist/bug-reporter.min.js`.
-
-### 2. Add to Your Website
+Add these two lines to your HTML, just before the closing `</body>` tag:
 
 ```html
-<!-- Add before closing </body> tag -->
-<script src="path/to/bug-reporter.min.js"></script>
+<!-- Using unpkg CDN -->
+<script src="https://unpkg.com/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js"></script>
 <script>
   BugReporter.init({
-    apiEndpoint: 'https://api.yoursite.com/bugs'
+    apiEndpoint: 'https://saasbox.app/api/bug-reporter',
+    saasBoxKey: 'YOUR_SAASBOX_KEY',
+    saasBoxSecret: 'YOUR_SAASBOX_SECRET'
   });
 </script>
+```
+
+**Alternative CDNs:**
+```html
+<!-- jsDelivr (alternative CDN) -->
+<script src="https://cdn.jsdelivr.net/npm/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js"></script>
+```
+
+**Version Options:**
+- `@1.0.0` - Specific version (recommended for production)
+- `@1.0` - Latest patch version (auto-updates 1.0.x)
+- `@1` - Latest minor version (auto-updates 1.x.x)
+- `@latest` - Always latest version (not recommended for production)
+
+### Via NPM (For Bundled Applications)
+
+```bash
+npm install saasbox-bug-reporter
+```
+
+```javascript
+import BugReporter from 'saasbox-bug-reporter';
+
+BugReporter.init({
+  apiEndpoint: 'https://saasbox.app/api/bug-reporter', // or your self-hosted api endpoint
+  saasBoxKey: 'YOUR_SAASBOX_KEY',
+  saasBoxSecret: 'YOUR_SAASBOX_SECRET'
+});
 ```
 
 That's it! The widget will appear as a floating bug button in the bottom-right corner.
@@ -64,7 +86,7 @@ const express = require('express');
 const multer = require('multer');
 const upload = multer({ dest: 'uploads/' });
 
-app.post('/api/bugs', upload.single('screenshot'), (req, res) => {
+app.post('/api/bug-reporter', upload.single('screenshot'), (req, res) => {
   const {
     saasBoxKey,
     saasBoxSecret,
@@ -149,7 +171,7 @@ app.post('/api/bugs', upload.single('screenshot'), (req, res) => {
 
 ```javascript
 BugReporter.init({
-  apiEndpoint: 'https://api.yoursite.com/bugs', // Required
+  apiEndpoint: 'https://saasbox.app/api/bug-reporter', // Required
   saasBoxKey: 'your-saasbox-key', // Required - Your SaasBox API key
   saasBoxSecret: 'your-saasbox-secret' // Required - Your SaasBox API secret
 });
@@ -160,7 +182,7 @@ BugReporter.init({
 ```javascript
 BugReporter.init({
   // Required
-  apiEndpoint: 'https://api.yoursite.com/bugs',
+  apiEndpoint: 'https://saasbox.app/api/bug-reporter',
   saasBoxKey: 'your-saasbox-key',
   saasBoxSecret: 'your-saasbox-secret',
   
@@ -191,7 +213,7 @@ BugReporter.init({
 **Support Widget Theme:**
 ```javascript
 BugReporter.init({
-  apiEndpoint: 'https://api.yoursite.com/bugs',
+  apiEndpoint: 'https://saasbox.app/api/bug-reporter',
   saasBoxKey: 'your-saasbox-key',
   saasBoxSecret: 'your-saasbox-secret',
   buttonIcon: '💬',
@@ -206,7 +228,7 @@ BugReporter.init({
 **Feedback Widget Theme:**
 ```javascript
 BugReporter.init({
-  apiEndpoint: 'https://api.yoursite.com/bugs',
+  apiEndpoint: 'https://saasbox.app/api/bug-reporter',
   saasBoxKey: 'your-saasbox-key',
   saasBoxSecret: 'your-saasbox-secret',
   buttonIcon: '📝',
@@ -225,7 +247,7 @@ BugReporter.init({
 **Custom Brand Colors:**
 ```javascript
 BugReporter.init({
-  apiEndpoint: 'https://api.yoursite.com/bugs',
+  apiEndpoint: 'https://saasbox.app/api/bug-reporter',
   saasBoxKey: 'your-saasbox-key',
   saasBoxSecret: 'your-saasbox-secret',
   buttonColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',

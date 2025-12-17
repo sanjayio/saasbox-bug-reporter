@@ -1,16 +1,46 @@
 {
-  "name": "bug-reporter-widget",
+  "name": "saasbox-bug-reporter",
   "version": "1.0.0",
-  "description": "Lightweight embeddable bug reporting widget",
+  "description": "Lightweight embeddable bug reporting widget for SaaS applications. Captures screenshots, console logs, network requests, and system information.",
   "main": "dist/bug-reporter.min.js",
+  "unpkg": "dist/bug-reporter.min.js",
+  "jsdelivr": "dist/bug-reporter.min.js",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
-    "serve": "python3 -m http.server 8080"
+    "serve": "python3 -m http.server 8080",
+    "prepublishOnly": "npm run build",
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags"
   },
-  "keywords": ["bug", "reporting", "widget", "embeddable"],
-  "author": "",
+  "keywords": [
+    "bug",
+    "reporting",
+    "widget",
+    "embeddable",
+    "saas",
+    "screenshot",
+    "error-tracking",
+    "feedback",
+    "bug-report",
+    "error-report",
+    "user-feedback"
+  ],
+  "author": "Sanjay Kumar <hello@iamsanjay.net>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sanjayio/saasbox.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sanjayio/saasbox/issues"
+  },
+  "homepage": "https://github.com/sanjayio/saasbox#readme",
   "devDependencies": {
     "@babel/core": "^7.23.0",
     "@babel/preset-env": "^7.23.0",

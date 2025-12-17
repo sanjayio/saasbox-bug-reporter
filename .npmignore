@@ -1,0 +1,19 @@
+# Source files (already compiled to dist/)
+src/
+demo/
+
+# Development files
+node_modules/
+.git/
+.github/
+docs/
+
+# Build configuration
+webpack.config.js
+
+# Logs and temp files
+*.log
+.DS_Store
+
+# Version control
+.gitignore

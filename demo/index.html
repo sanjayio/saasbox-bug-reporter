@@ -171,7 +171,7 @@
 &lt;script src="dist/bug-reporter.min.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   BugReporter.init({
-    apiEndpoint: 'https://api.example.com/bugs',
+    apiEndpoint: 'https://saasbox.app/api/bug-reporter',
     accountId: 'your-account-id'
   });
 &lt;/script&gt;</pre>
@@ -182,7 +182,7 @@
       <h2>Customization Options</h2>
       <div class="code-block">
         <pre>BugReporter.init({
-            apiEndpoint: 'https://api.example.com/bugs',
+            apiEndpoint: 'https://saasbox.app/api/bug-reporter',
             accountId: 'your-account-id',
             
             // Button customization
@@ -229,11 +229,11 @@
   </div>
 
   <!-- Include the bug reporter widget -->
-  <script src="../dist/bug-reporter.min.js"></script>
+  <script src="https://unpkg.com/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js"></script>
   <script>
     // Initialize the widget with customization
     BugReporter.init({
-      apiEndpoint: 'https://n8n.iamsanjay.net/webhook-test/travel-agent-demo',
+      apiEndpoint: 'https://saasbox.app/api/bug-reporter',
       saasBoxKey: 'demo-saasbox-key-123',
       saasBoxSecret: 'demo-saasbox-secret-456',
       

@@ -1,0 +1,113 @@
+name: Publish to NPM
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0, v1.0.1, etc.
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write  # Required for NPM provenance
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build widget
+        run: npm run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/bug-reporter.min.js" ]; then
+            echo "Error: Build output not found"
+            exit 1
+          fi
+          ls -lh dist/
+          echo "File size: $(ls -lh dist/bug-reporter.min.js | awk '{print $5}')"
+
+      - name: Publish to NPM
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Wait for CDN propagation
+        run: sleep 30
+
+      - name: Verify unpkg CDN
+        run: |
+          echo "Testing unpkg CDN..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://unpkg.com/bug-reporter-widget@${{ steps.version.outputs.VERSION }}/dist/bug-reporter.min.js")
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ unpkg CDN is serving the package"
+          else
+            echo "⚠️ unpkg returned HTTP $HTTP_CODE (may take a few more minutes)"
+          fi
+
+      - name: Verify jsDelivr CDN
+        run: |
+          echo "Testing jsDelivr CDN..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://cdn.jsdelivr.net/npm/bug-reporter-widget@${{ steps.version.outputs.VERSION }}/dist/bug-reporter.min.js")
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ jsDelivr CDN is serving the package"
+          else
+            echo "⚠️ jsDelivr returned HTTP $HTTP_CODE (may take a few more minutes)"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/bug-reporter.min.js
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            ### Via unpkg CDN
+            ```html
+            <script src="https://unpkg.com/bug-reporter-widget@${{ steps.version.outputs.VERSION }}/dist/bug-reporter.min.js"></script>
+            ```
+
+            ### Via jsDelivr CDN
+            ```html
+            <script src="https://cdn.jsdelivr.net/npm/bug-reporter-widget@${{ steps.version.outputs.VERSION }}/dist/bug-reporter.min.js"></script>
+            ```
+
+            ### Via NPM
+            ```bash
+            npm install bug-reporter-widget@${{ steps.version.outputs.VERSION }}
+            ```
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## 🎉 Published Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Package URLs" >> $GITHUB_STEP_SUMMARY
+          echo "- **NPM:** https://www.npmjs.com/package/bug-reporter-widget" >> $GITHUB_STEP_SUMMARY
+          echo "- **unpkg:** https://unpkg.com/bug-reporter-widget@${{ steps.version.outputs.VERSION }}/dist/bug-reporter.min.js" >> $GITHUB_STEP_SUMMARY
+          echo "- **jsDelivr:** https://cdn.jsdelivr.net/npm/bug-reporter-widget@${{ steps.version.outputs.VERSION }}/dist/bug-reporter.min.js" >> $GITHUB_STEP_SUMMARY
