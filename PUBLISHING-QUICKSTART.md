@@ -151,7 +151,7 @@ Share these URLs with customers:
 <script src="https://unpkg.com/saasbox-bug-reporter@1.0.0/dist/bug-reporter.min.js"></script>
 <script>
   BugReporter.init({
-    apiEndpoint: 'https://api.yoursite.com/bugs',
+    apiEndpoint: 'https://saasbox.app/api/bug-reporter',
     saasBoxKey: 'CUSTOMER_KEY',
     saasBoxSecret: 'CUSTOMER_SECRET'
   });
