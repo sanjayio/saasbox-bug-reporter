@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bug Reporter - Custom Themes Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f5f5;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 32px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 40px;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .theme-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .theme-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .theme-card h3 {
+      color: #333;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .theme-card p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .theme-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .preview-button {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .preview-info {
+      flex: 1;
+    }
+
+    .preview-info strong {
+      display: block;
+      color: #333;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .preview-info span {
+      color: #666;
+      font-size: 12px;
+    }
+
+    .apply-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .apply-btn:hover {
+      background: #555;
+    }
+
+    .active-theme {
+      background: #667eea;
+    }
+
+    .active-theme:hover {
+      background: #5568d3;
+    }
+
+    .info-box {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 24px;
+    }
+
+    .info-box h2 {
+      color: #333;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+
+    .info-box p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+
+    .info-box code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Monaco', monospace;
+      font-size: 13px;
+      color: #d63384;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Custom Themes Demo</h1>
+    <p class="subtitle">Try different widget themes and styles - Click any "Apply Theme" button below</p>
+
+    <div class="themes-grid">
+      <!-- Default Theme -->
+      <div class="theme-card">
+        <h3>Default Bug Reporter</h3>
+        <p>Classic purple gradient theme for bug reporting</p>
+        <div class="theme-preview">
+          <div class="preview-button" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🐛</div>
+          <div class="preview-info">
+            <strong>Report a Bug</strong>
+            <span>Bottom-right • Circle</span>
+          </div>
+        </div>
+        <button class="apply-btn active-theme" onclick="applyTheme('default')">Apply Theme</button>
+      </div>
+
+      <!-- Support Theme -->
+      <div class="theme-card">
+        <h3>Support Widget</h3>
+        <p>Green-themed support chat widget</p>
+        <div class="theme-preview">
+          <div class="preview-button" style="background: #4CAF50;">💬</div>
+          <div class="preview-info">
+            <strong>Contact Support</strong>
+            <span>Bottom-right • Circle</span>
+          </div>
+        </div>
+        <button class="apply-btn" onclick="applyTheme('support')">Apply Theme</button>
+      </div>
+
+      <!-- Feedback Theme -->
+      <div class="theme-card">
+        <h3>Feedback Widget</h3>
+        <p>Orange feedback collection widget</p>
+        <div class="theme-preview">
+          <div class="preview-button" style="background: #FF9800; border-radius: 12px;">📝</div>
+          <div class="preview-info">
+            <strong>Share Feedback</strong>
+            <span>Bottom-left • Rounded</span>
+          </div>
+        </div>
+        <button class="apply-btn" onclick="applyTheme('feedback')">Apply Theme</button>
+      </div>
+
+      <!-- Custom Pink Theme -->
+      <div class="theme-card">
+        <h3>Custom Brand</h3>
+        <p>Pink gradient custom brand colors</p>
+        <div class="theme-preview">
+          <div class="preview-button" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">💖</div>
+          <div class="preview-info">
+            <strong>Report Issue</strong>
+            <span>Bottom-right • Circle • Large</span>
+          </div>
+        </div>
+        <button class="apply-btn" onclick="applyTheme('pink')">Apply Theme</button>
+      </div>
+
+      <!-- Help Theme -->
+      <div class="theme-card">
+        <h3>Help Center</h3>
+        <p>Blue help and assistance widget</p>
+        <div class="theme-preview">
+          <div class="preview-button" style="background: #2196F3;">❓</div>
+          <div class="preview-info">
+            <strong>Get Help</strong>
+            <span>Top-right • Circle</span>
+          </div>
+        </div>
+        <button class="apply-btn" onclick="applyTheme('help')">Apply Theme</button>
+      </div>
+
+      <!-- Dark Theme -->
+      <div class="theme-card">
+        <h3>Dark Mode</h3>
+        <p>Sleek dark theme with red accents</p>
+        <div class="theme-preview">
+          <div class="preview-button" style="background: #1a1a1a;">⚠️</div>
+          <div class="preview-info">
+            <strong>Report Problem</strong>
+            <span>Bottom-right • Square</span>
+          </div>
+        </div>
+        <button class="apply-btn" onclick="applyTheme('dark')">Apply Theme</button>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <h2>How to Use</h2>
+      <p>
+        Click any "Apply Theme" button above to reload the page with that theme. 
+        The widget button will appear in its configured position with the custom styling.
+      </p>
+      <p>
+        All themes are fully customizable via the <code>BugReporter.init()</code> configuration.
+        Check the source code of this page or the README for implementation details.
+      </p>
+      <p>
+        <strong>Current Theme:</strong> <span id="current-theme">Default</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Include the bug reporter widget -->
+  <script src="../dist/bug-reporter.min.js"></script>
+  <script>
+    const themes = {
+      default: {
+        apiEndpoint: 'https://jsonplaceholder.typicode.com/posts',
+        saasBoxKey: 'demo-saasbox-key',
+        saasBoxSecret: 'demo-saasbox-secret',
+        position: 'bottom-right',
+        offsetX: 30,
+        offsetY: 30,
+        buttonSize: 65,
+        buttonShape: 'circle',
+        buttonIcon: '🐛',
+        buttonColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        buttonShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+        modalTitle: 'Report a Bug',
+        modalHeaderColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        modalHeaderTextColor: '#ffffff',
+        modalPrimaryColor: '#667eea',
+        modalDescriptionLabel: 'Describe the issue',
+        modalDescriptionPlaceholder: 'Please tell us what went wrong...',
+        modalSubmitText: 'Submit Report',
+        modalCancelText: 'Cancel'
+      },
+      support: {
+        apiEndpoint: 'https://jsonplaceholder.typicode.com/posts',
+        saasBoxKey: 'demo-saasbox-key',
+        saasBoxSecret: 'demo-saasbox-secret',
+        position: 'bottom-right',
+        buttonIcon: '💬',
+        buttonColor: '#4CAF50',
+        buttonShadow: '0 4px 12px rgba(76, 175, 80, 0.4)',
+        modalTitle: 'Contact Support',
+        modalHeaderColor: '#4CAF50',
+        modalHeaderTextColor: '#ffffff',
+        modalPrimaryColor: '#4CAF50',
+        modalDescriptionLabel: 'How can we help?',
+        modalDescriptionPlaceholder: 'Describe your issue...',
+        modalSubmitText: 'Send Message',
+        modalCancelText: 'Cancel'
+      },
+      feedback: {
+        apiEndpoint: 'https://jsonplaceholder.typicode.com/posts',
+        saasBoxKey: 'demo-saasbox-key',
+        saasBoxSecret: 'demo-saasbox-secret',
+        position: 'bottom-left',
+        buttonIcon: '📝',
+        buttonColor: '#FF9800',
+        buttonShape: 'rounded',
+        buttonShadow: '0 4px 12px rgba(255, 152, 0, 0.4)',
+        modalTitle: 'Share Feedback',
+        modalHeaderColor: '#FF9800',
+        modalHeaderTextColor: '#ffffff',
+        modalPrimaryColor: '#FF9800',
+        modalDescriptionLabel: 'Your feedback',
+        modalDescriptionPlaceholder: 'Tell us what you think...',
+        modalSubmitText: 'Send Feedback',
+        modalCancelText: 'Cancel'
+      },
+      pink: {
+        apiEndpoint: 'https://jsonplaceholder.typicode.com/posts',
+        saasBoxKey: 'demo-saasbox-key',
+        saasBoxSecret: 'demo-saasbox-secret',
+        position: 'bottom-right',
+        offsetX: 30,
+        offsetY: 30,
+        buttonSize: 70,
+        buttonIcon: '💖',
+        buttonColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        buttonShadow: '0 6px 20px rgba(245, 87, 108, 0.4)',
+        modalTitle: 'Report Issue',
+        modalHeaderColor: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        modalHeaderTextColor: '#ffffff',
+        modalPrimaryColor: '#f5576c',
+        modalDescriptionLabel: 'What happened?',
+        modalDescriptionPlaceholder: 'Describe the issue...',
+        modalSubmitText: 'Submit',
+        modalCancelText: 'Cancel'
+      },
+      help: {
+        apiEndpoint: 'https://jsonplaceholder.typicode.com/posts',
+        saasBoxKey: 'demo-saasbox-key',
+        saasBoxSecret: 'demo-saasbox-secret',
+        position: 'top-right',
+        buttonIcon: '❓',
+        buttonColor: '#2196F3',
+        buttonShadow: '0 4px 12px rgba(33, 150, 243, 0.4)',
+        modalTitle: 'Get Help',
+        modalHeaderColor: '#2196F3',
+        modalHeaderTextColor: '#ffffff',
+        modalPrimaryColor: '#2196F3',
+        modalDescriptionLabel: 'What do you need help with?',
+        modalDescriptionPlaceholder: 'Describe your question...',
+        modalSubmitText: 'Ask Question',
+        modalCancelText: 'Cancel'
+      },
+      dark: {
+        apiEndpoint: 'https://jsonplaceholder.typicode.com/posts',
+        saasBoxKey: 'demo-saasbox-key',
+        saasBoxSecret: 'demo-saasbox-secret',
+        position: 'bottom-right',
+        buttonIcon: '⚠️',
+        buttonColor: '#1a1a1a',
+        buttonShape: 'square',
+        buttonShadow: '0 4px 12px rgba(0, 0, 0, 0.5)',
+        modalTitle: 'Report Problem',
+        modalHeaderColor: '#1a1a1a',
+        modalHeaderTextColor: '#ffffff',
+        modalPrimaryColor: '#f44336',
+        modalDescriptionLabel: 'Problem details',
+        modalDescriptionPlaceholder: 'Describe the problem...',
+        modalSubmitText: 'Submit Report',
+        modalCancelText: 'Close'
+      }
+    };
+
+    function applyTheme(themeName) {
+      localStorage.setItem('selectedTheme', themeName);
+      location.reload();
+    }
+
+    // Load selected theme
+    const selectedTheme = localStorage.getItem('selectedTheme') || 'default';
+    BugReporter.init(themes[selectedTheme]);
+    
+    // Update UI
+    document.getElementById('current-theme').textContent = selectedTheme.charAt(0).toUpperCase() + selectedTheme.slice(1);
+    
+    // Highlight active theme button
+    const buttons = document.querySelectorAll('.apply-btn');
+    buttons.forEach(btn => {
+      btn.classList.remove('active-theme');
+      const theme = btn.getAttribute('onclick').match(/applyTheme\('(.+?)'\)/)[1];
+      if (theme === selectedTheme) {
+        btn.classList.add('active-theme');
+        btn.textContent = 'Active Theme ✓';
+      } else {
+        btn.textContent = 'Apply Theme';
+      }
+    });
+  </script>
+</body>
+</html>

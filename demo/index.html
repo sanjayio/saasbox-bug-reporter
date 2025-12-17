@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bug Reporter Widget Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      color: #333;
+      font-size: 20px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .demo-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #667eea;
+      color: white;
+    }
+
+    .demo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .demo-btn.secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .demo-btn.secondary:hover {
+      background: #d0d0d0;
+    }
+
+    .code-block {
+      background: #f5f5f5;
+      padding: 20px;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+      margin: 15px 0;
+      overflow-x: auto;
+    }
+
+    .code-block pre {
+      margin: 0;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .feature-list li {
+      padding: 8px 0;
+      padding-left: 28px;
+      position: relative;
+    }
+
+    .feature-list li:before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #667eea;
+      font-weight: bold;
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 16px;
+      border-radius: 4px;
+      margin: 15px 0;
+    }
+
+    .info-box p {
+      margin: 0;
+      color: #0d47a1;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐛 Bug Reporter Widget</h1>
+    <p class="subtitle">A lightweight, embeddable bug reporting solution for SaaS applications</p>
+
+    <div class="section">
+      <h2>Demo Actions</h2>
+      <p style="margin-bottom: 15px;">Test the widget by clicking the bug button in the bottom-right corner, or try these demo actions:</p>
+      <div class="buttons">
+        <button class="demo-btn" onclick="triggerConsoleLog()">Generate Console Logs</button>
+        <button class="demo-btn" onclick="triggerNetworkRequest()">Make Network Request</button>
+        <button class="demo-btn" onclick="triggerError()">Trigger Error</button>
+        <button class="demo-btn secondary" onclick="showSystemInfo()">Show System Info</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Features</h2>
+      <ul class="feature-list">
+        <li>Automatic screenshot capture</li>
+        <li>Console log collection (last 50 logs)</li>
+        <li>Network request monitoring (last 20 requests)</li>
+        <li>System and browser information</li>
+        <li>Simple text description</li>
+        <li>Lightweight and fast (&lt;50KB minified)</li>
+        <li>Cross-browser compatible</li>
+        <li>Easy one-line installation</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Installation</h2>
+      <div class="code-block">
+        <pre>&lt;!-- Add this to your HTML --&gt;
+&lt;script src="dist/bug-reporter.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  BugReporter.init({
+    apiEndpoint: 'https://api.example.com/bugs',
+    accountId: 'your-account-id'
+  });
+&lt;/script&gt;</pre>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Customization Options</h2>
+      <div class="code-block">
+        <pre>BugReporter.init({
+            apiEndpoint: 'https://api.example.com/bugs',
+            accountId: 'your-account-id',
+            
+            // Button customization
+            position: 'bottom-right', // 'top-left', 'top-right', 'bottom-left', 'bottom-right'
+            offsetX: 30,               // Distance from edge (pixels)
+            offsetY: 30,               // Distance from edge (pixels)
+            buttonSize: 65,            // Button size (pixels)
+            buttonShape: 'rounded',     // 'circle', 'rounded', 'square'
+            buttonIcon: '🐛',          // Any emoji or HTML
+            buttonColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            buttonShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+            
+            // Modal customization
+            modalTitle: 'Report a Bug',
+            modalHeaderColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            modalHeaderTextColor: '#ffffff',
+            modalPrimaryColor: '#667eea',
+            modalDescriptionLabel: 'Describe the issue',
+            modalDescriptionPlaceholder: 'Please tell us what went wrong...',
+            modalSubmitText: 'Submit Report',
+            modalCancelText: 'Cancel'
+          });
+        </pre>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>API Endpoint</h2>
+      <p style="margin-bottom: 10px;">The widget sends a multipart/form-data POST request with:</p>
+      <ul class="feature-list">
+        <li><strong>saasBoxKey:</strong> Your SaasBox API key (text)</li>
+        <li><strong>saasBoxSecret:</strong> Your SaasBox API secret (text)</li>
+        <li><strong>description:</strong> User's bug description (text)</li>
+        <li><strong>screenshot:</strong> Screenshot image (PNG blob)</li>
+        <li><strong>consoleLogs:</strong> Array of console logs (JSON)</li>
+        <li><strong>networkRequests:</strong> Array of network requests (JSON)</li>
+        <li><strong>systemInfo:</strong> Browser and system information (JSON)</li>
+      </ul>
+    </div>
+
+    <div class="info-box">
+      <p><strong>Note:</strong> This demo uses a placeholder API endpoint. In production, replace it with your actual bug reporting endpoint.</p>
+    </div>
+  </div>
+
+  <!-- Include the bug reporter widget -->
+  <script src="../dist/bug-reporter.min.js"></script>
+  <script>
+    // Initialize the widget with customization
+    BugReporter.init({
+      apiEndpoint: 'https://n8n.iamsanjay.net/webhook-test/travel-agent-demo',
+      saasBoxKey: 'demo-saasbox-key-123',
+      saasBoxSecret: 'demo-saasbox-secret-456',
+      
+      // Trigger button customization
+      position: 'bottom-left',
+      offsetX: 30,
+      offsetY: 30,
+      buttonSize: 55,
+      buttonShape: 'rounded', // 'circle', 'rounded', 'square'
+      buttonIcon: '🐛',
+      buttonColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      buttonShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+      
+      // Modal customization
+      modalTitle: 'Report a Bug',
+      modalHeaderColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', // linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+      modalHeaderTextColor: '#ffffff',
+      modalPrimaryColor: '#667eea',
+      modalDescriptionLabel: 'Describe the issue',
+      modalDescriptionPlaceholder: 'Please tell us what went wrong...',
+      modalSubmitText: 'Submit',
+      modalCancelText: 'Cancel'
+    });
+
+    // Demo functions
+    function triggerConsoleLog() {
+      console.log('This is a test log message');
+      console.info('Info: Widget is working correctly');
+      console.warn('Warning: This is a warning message');
+      alert('Console logs generated! Open the bug reporter to see them included.');
+    }
+
+    function triggerNetworkRequest() {
+      fetch('https://jsonplaceholder.typicode.com/users/1')
+        .then(response => response.json())
+        .then(data => {
+          console.log('Network request completed:', data);
+          alert('Network request made! Open the bug reporter to see it tracked.');
+        });
+    }
+
+    function triggerError() {
+      console.error('Error: Something went wrong!');
+      console.error('Stack trace example:', new Error('Demo error'));
+      alert('Error logged! Open the bug reporter to see it in console logs.');
+    }
+
+    function showSystemInfo() {
+      const info = {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        screen: `${screen.width}x${screen.height}`,
+        viewport: `${window.innerWidth}x${window.innerHeight}`
+      };
+      console.log('System Info:', info);
+      alert(`System Info:\n${JSON.stringify(info, null, 2)}`);
+    }
+  </script>
+</body>
+</html>
