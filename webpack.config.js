@@ -53,5 +53,9 @@ module.exports = {
   },
   resolve: {
     extensions: ['.js']
+  },
+  performance: {
+    maxEntrypointSize: 300000, // 300 KiB
+    maxAssetSize: 300000 // 300 KiB
   }
 };

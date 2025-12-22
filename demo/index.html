@@ -185,6 +185,9 @@
             apiEndpoint: 'https://saasbox.app/api/bug-reporter',
             accountId: 'your-account-id',
             
+            // Screenshot capture mode
+            screenshotMode: 'selection', // 'selection' (area selection) or 'full' (full viewport)
+            
             // Button customization
             position: 'bottom-right', // 'top-left', 'top-right', 'bottom-left', 'bottom-right'
             offsetX: 30,               // Distance from edge (pixels)
@@ -229,13 +232,16 @@
   </div>
 
   <!-- Include the bug reporter widget -->
-  <script src="https://unpkg.com/saasbox-bug-reporter@1.0.1/dist/bug-reporter.min.js"></script>
+  <script src="../dist/bug-reporter.min.js"></script>
   <script>
     // Initialize the widget with customization
     BugReporter.init({
       apiEndpoint: 'https://saasbox.app/api/bug-reporter',
       saasBoxKey: 'demo-saasbox-key-123',
       saasBoxSecret: 'demo-saasbox-secret-456',
+      
+      // Screenshot capture mode
+      screenshotMode: 'selection', // 'selection' (area selection) or 'full' (full viewport)
       
       // Trigger button customization
       position: 'bottom-left',
