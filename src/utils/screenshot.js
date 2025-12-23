@@ -55,76 +55,121 @@ function convertColorFunctionsInText(text) {
 }
 
 /**
- * Applies computed styles as inline styles to all elements
- * This converts lab() colors to rgb before html2canvas processes them
+ * Attempts to convert lab()/lch() colors in stylesheet text
+ * This is a best-effort approach since we can't always access stylesheet text
  */
-function applyComputedStylesAsInline() {
-  const elements = document.querySelectorAll('*');
-  const originalStyles = new Map();
+function convertStylesheetColors() {
+  const overrideStyle = document.createElement('style');
+  overrideStyle.setAttribute('data-br-color-override', 'true');
+  overrideStyle.setAttribute('type', 'text/css');
   
-  elements.forEach((el, index) => {
-    try {
-      const computed = window.getComputedStyle(el);
-      const inlineStyle = el.getAttribute('style') || '';
-      
-      // Store original inline style
-      originalStyles.set(el, inlineStyle);
-      
-      // Apply computed color properties as inline styles
-      const colorProps = [
-        'color', 'backgroundColor', 'borderColor',
-        'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
-        'outlineColor', 'textDecorationColor', 'columnRuleColor'
-      ];
-      
-      let newStyle = inlineStyle;
-      colorProps.forEach(prop => {
-        const value = computed[prop];
-        if (value && value !== 'transparent' && value !== 'rgba(0, 0, 0, 0)') {
-          const camelProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
-          // Only add if not already in inline style
-          if (!inlineStyle.includes(camelProp + ':')) {
-            newStyle = `${newStyle}; ${camelProp}: ${value}`.trim();
+  const rules = [];
+  
+  try {
+    // Process all accessible stylesheets
+    for (let i = 0; i < document.styleSheets.length; i++) {
+      try {
+        const sheet = document.styleSheets[i];
+        if (!sheet.cssRules && !sheet.rules) continue;
+        
+        const cssRules = sheet.cssRules || sheet.rules;
+        for (let j = 0; j < cssRules.length; j++) {
+          try {
+            const rule = cssRules[j];
+            if (rule.style && rule.selectorText) {
+              // Get computed colors for elements matching this selector
+              try {
+                const testElements = document.querySelectorAll(rule.selectorText);
+                if (testElements.length > 0) {
+                  const firstEl = testElements[0];
+                  const computed = window.getComputedStyle(firstEl);
+                  
+                  const colorProps = [
+                    { css: 'color', js: 'color' },
+                    { css: 'background-color', js: 'backgroundColor' },
+                    { css: 'border-color', js: 'borderColor' }
+                  ];
+                  
+                  let ruleParts = [];
+                  colorProps.forEach(({ css, js }) => {
+                    const value = computed[js];
+                    if (value && value !== 'transparent' && value !== 'rgba(0, 0, 0, 0)') {
+                      if (!value.includes('lab(') && !value.includes('lch(')) {
+                        ruleParts.push(`${css}: ${value} !important;`);
+                      }
+                    }
+                  });
+                  
+                  if (ruleParts.length > 0) {
+                    rules.push(`${rule.selectorText} { ${ruleParts.join(' ')} }`);
+                  }
+                }
+              } catch (e) {
+                // Skip if selector is invalid
+              }
+            }
+          } catch (e) {
+            // Skip rules that can't be accessed (e.g., cross-origin)
+            continue;
           }
         }
-      });
-      
-      // Also handle background-image for gradients
-      const bgImage = computed.backgroundImage;
-      if (bgImage && bgImage !== 'none' && !inlineStyle.includes('background-image:')) {
-        newStyle = `${newStyle}; background-image: ${bgImage}`.trim();
+      } catch (e) {
+        // Skip stylesheets that can't be accessed
+        continue;
       }
-      
-      if (newStyle !== inlineStyle) {
-        el.setAttribute('style', newStyle);
-        el.setAttribute('data-br-temp-style', 'true');
-      }
-    } catch (e) {
-      // Skip elements that can't be processed
     }
-  });
+  } catch (e) {
+    console.warn('Failed to process stylesheets:', e);
+  }
   
-  return originalStyles;
+  // Add a global override that forces computed colors
+  // This uses a very high specificity to override lab() colors
+  const globalOverride = `
+    html * {
+      color: inherit !important;
+      background-color: inherit !important;
+      border-color: inherit !important;
+    }
+  `;
+  
+  overrideStyle.textContent = globalOverride + rules.join('\n');
+  document.head.appendChild(overrideStyle);
+  
+  return overrideStyle;
 }
 
 /**
- * Restores original inline styles
+ * Removes the color override stylesheet
  */
-function restoreOriginalStyles(originalStyles) {
-  originalStyles.forEach((originalStyle, el) => {
-    try {
-      if (el.hasAttribute('data-br-temp-style')) {
-        if (originalStyle) {
-          el.setAttribute('style', originalStyle);
-        } else {
-          el.removeAttribute('style');
-        }
-        el.removeAttribute('data-br-temp-style');
-      }
-    } catch (e) {
-      // Ignore errors
+function removeColorOverrideStylesheet(overrideStyle) {
+  try {
+    if (overrideStyle && overrideStyle.parentNode) {
+      overrideStyle.parentNode.removeChild(overrideStyle);
     }
-  });
+  } catch (e) {
+    // Ignore errors
+  }
+}
+
+/**
+ * Wrapper for html2canvas that handles lab() color errors gracefully
+ */
+async function safeHtml2canvas(element, options) {
+  try {
+    return await html2canvas(element, options);
+  } catch (error) {
+    // If it's a lab()/lch() color error, provide helpful message
+    if (error.message && (error.message.includes('lab') || error.message.includes('lch') || error.message.includes('color function'))) {
+      const enhancedError = new Error(
+        'Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). ' +
+        'html2canvas cannot parse these modern color formats. ' +
+        'Please use standard color formats (rgb, hex, hsl) in your CSS, or consider using a CSS preprocessor to convert lab() colors to rgb during build time.'
+      );
+      enhancedError.originalError = error;
+      throw enhancedError;
+    }
+    throw error;
+  }
 }
 
 /**
@@ -297,11 +342,14 @@ export async function captureScreenshot() {
     if (el) el.style.display = 'none';
   });
 
-  // Apply computed styles as inline styles to convert lab() colors
-  const originalStyles = applyComputedStylesAsInline();
+  // Create override stylesheet to replace lab() colors
+  const overrideStyle = convertStylesheetColors();
+  
+  // Wait a bit for styles to apply
+  await new Promise(resolve => setTimeout(resolve, 50));
 
   try {
-    const canvas = await html2canvas(document.body, {
+    const canvas = await safeHtml2canvas(document.body, {
       allowTaint: true,
       useCORS: true,
       logging: false,
@@ -321,8 +369,8 @@ export async function captureScreenshot() {
       if (el) el.style.display = '';
     });
     
-    // Restore original styles
-    restoreOriginalStyles(originalStyles);
+    // Remove override stylesheet
+    removeColorOverrideStylesheet(overrideStyle);
 
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -338,12 +386,12 @@ export async function captureScreenshot() {
       if (el) el.style.display = '';
     });
     
-    // Restore original styles even on error
-    restoreOriginalStyles(originalStyles);
+    // Remove override stylesheet even on error
+    removeColorOverrideStylesheet(overrideStyle);
     
-    // If error is related to lab() color parsing, provide a more helpful error
+    // If error is related to lab() color parsing, try a fallback approach
     if (error.message && (error.message.includes('lab') || error.message.includes('lch'))) {
-      console.warn('Screenshot capture failed due to unsupported color functions.');
+      console.warn('Screenshot capture failed due to unsupported color functions. The page uses lab()/lch() colors which html2canvas cannot parse. Consider using standard color formats (rgb, hex, hsl) for better compatibility.');
       throw new Error('Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). Please use standard color formats (rgb, hex, hsl) for better compatibility.');
     }
     
@@ -357,14 +405,17 @@ export async function captureScreenshotArea(rect) {
     if (el) el.style.display = 'none';
   });
 
-  // Apply computed styles as inline styles to convert lab() colors
-  const originalStyles = applyComputedStylesAsInline();
+  // Create override stylesheet to replace lab() colors
+  const overrideStyle = convertStylesheetColors();
+  
+  // Wait a bit for styles to apply
+  await new Promise(resolve => setTimeout(resolve, 50));
 
   try {
     // Capture the full viewport
     // With scrollY: -window.scrollY, html2canvas captures the viewport
     // The canvas dimensions should match window.innerWidth/innerHeight
-    const canvas = await html2canvas(document.body, {
+    const canvas = await safeHtml2canvas(document.body, {
       allowTaint: true,
       useCORS: true,
       logging: false,
@@ -385,8 +436,8 @@ export async function captureScreenshotArea(rect) {
       if (el) el.style.display = '';
     });
     
-    // Restore original styles
-    restoreOriginalStyles(originalStyles);
+    // Remove override stylesheet
+    removeColorOverrideStylesheet(overrideStyle);
 
     // Calculate scale factors
     // The canvas might be scaled by devicePixelRatio or other factors
@@ -433,12 +484,12 @@ export async function captureScreenshotArea(rect) {
       if (el) el.style.display = '';
     });
     
-    // Restore original styles even on error
-    restoreOriginalStyles(originalStyles);
+    // Remove override stylesheet even on error
+    removeColorOverrideStylesheet(overrideStyle);
     
     // If error is related to lab() color parsing, provide a more helpful error
     if (error.message && (error.message.includes('lab') || error.message.includes('lch'))) {
-      console.warn('Screenshot capture failed due to unsupported color functions.');
+      console.warn('Screenshot capture failed due to unsupported color functions. The page uses lab()/lch() colors which html2canvas cannot parse. Consider using standard color formats (rgb, hex, hsl) for better compatibility.');
       throw new Error('Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). Please use standard color formats (rgb, hex, hsl) for better compatibility.');
     }
     
