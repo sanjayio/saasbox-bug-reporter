@@ -41,14 +41,170 @@ function getElementSelector(el) {
 }
 
 /**
+ * Converts lab() and lch() color functions to rgb by replacing them with a fallback
+ * This is a simple regex-based approach for stylesheet text
+ */
+function convertColorFunctionsInText(text) {
+  if (!text) return text;
+  
+  // Replace lab() and lch() functions with a fallback rgb color
+  // We use a medium gray as fallback since we can't easily convert without a color library
+  return text
+    .replace(/lab\([^)]+\)/gi, 'rgb(128, 128, 128)')
+    .replace(/lch\([^)]+\)/gi, 'rgb(128, 128, 128)');
+}
+
+/**
+ * Applies computed styles as inline styles to all elements
+ * This converts lab() colors to rgb before html2canvas processes them
+ */
+function applyComputedStylesAsInline() {
+  const elements = document.querySelectorAll('*');
+  const originalStyles = new Map();
+  
+  elements.forEach((el, index) => {
+    try {
+      const computed = window.getComputedStyle(el);
+      const inlineStyle = el.getAttribute('style') || '';
+      
+      // Store original inline style
+      originalStyles.set(el, inlineStyle);
+      
+      // Apply computed color properties as inline styles
+      const colorProps = [
+        'color', 'backgroundColor', 'borderColor',
+        'borderTopColor', 'borderRightColor', 'borderBottomColor', 'borderLeftColor',
+        'outlineColor', 'textDecorationColor', 'columnRuleColor'
+      ];
+      
+      let newStyle = inlineStyle;
+      colorProps.forEach(prop => {
+        const value = computed[prop];
+        if (value && value !== 'transparent' && value !== 'rgba(0, 0, 0, 0)') {
+          const camelProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
+          // Only add if not already in inline style
+          if (!inlineStyle.includes(camelProp + ':')) {
+            newStyle = `${newStyle}; ${camelProp}: ${value}`.trim();
+          }
+        }
+      });
+      
+      // Also handle background-image for gradients
+      const bgImage = computed.backgroundImage;
+      if (bgImage && bgImage !== 'none' && !inlineStyle.includes('background-image:')) {
+        newStyle = `${newStyle}; background-image: ${bgImage}`.trim();
+      }
+      
+      if (newStyle !== inlineStyle) {
+        el.setAttribute('style', newStyle);
+        el.setAttribute('data-br-temp-style', 'true');
+      }
+    } catch (e) {
+      // Skip elements that can't be processed
+    }
+  });
+  
+  return originalStyles;
+}
+
+/**
+ * Restores original inline styles
+ */
+function restoreOriginalStyles(originalStyles) {
+  originalStyles.forEach((originalStyle, el) => {
+    try {
+      if (el.hasAttribute('data-br-temp-style')) {
+        if (originalStyle) {
+          el.setAttribute('style', originalStyle);
+        } else {
+          el.removeAttribute('style');
+        }
+        el.removeAttribute('data-br-temp-style');
+      }
+    } catch (e) {
+      // Ignore errors
+    }
+  });
+}
+
+/**
  * Converts unsupported CSS color functions (like lab()) to rgb/hex
- * by using getComputedStyle to get the browser's computed color value
+ * by processing stylesheets and inline styles
  */
 function convertUnsupportedColors(clonedDoc) {
   try {
+    // Process all stylesheets in the cloned document
+    const styleSheets = clonedDoc.styleSheets;
+    for (let i = 0; i < styleSheets.length; i++) {
+      try {
+        const sheet = styleSheets[i];
+        if (!sheet.cssRules && !sheet.rules) continue;
+        
+        const rules = sheet.cssRules || sheet.rules;
+        for (let j = 0; j < rules.length; j++) {
+          try {
+            const rule = rules[j];
+            if (rule.style) {
+              // Process each style property
+              for (let k = 0; k < rule.style.length; k++) {
+                const prop = rule.style[k];
+                const value = rule.style.getPropertyValue(prop);
+                
+                if (value && (value.includes('lab(') || value.includes('lch('))) {
+                  // Try to get computed value from original document
+                  try {
+                    // Create a temporary element to get computed style
+                    const tempEl = document.createElement('div');
+                    tempEl.style.cssText = `${prop}: ${value}`;
+                    document.body.appendChild(tempEl);
+                    const computed = window.getComputedStyle(tempEl)[prop];
+                    document.body.removeChild(tempEl);
+                    
+                    if (computed && !computed.includes('lab(') && !computed.includes('lch(')) {
+                      rule.style.setProperty(prop, computed, rule.style.getPropertyPriority(prop));
+                    } else {
+                      // Fallback to gray
+                      rule.style.setProperty(prop, 'rgb(128, 128, 128)', rule.style.getPropertyPriority(prop));
+                    }
+                  } catch (e) {
+                    // Fallback to gray if computation fails
+                    rule.style.setProperty(prop, 'rgb(128, 128, 128)', rule.style.getPropertyPriority(prop));
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            // Skip rules that can't be accessed (e.g., cross-origin)
+            continue;
+          }
+        }
+      } catch (e) {
+        // Skip stylesheets that can't be accessed
+        continue;
+      }
+    }
+    
+    // Process inline styles in style tags
+    const styleTags = clonedDoc.querySelectorAll('style');
+    styleTags.forEach(styleTag => {
+      try {
+        if (styleTag.textContent && (styleTag.textContent.includes('lab(') || styleTag.textContent.includes('lch('))) {
+          // Process the CSS text
+          let cssText = styleTag.textContent;
+          
+          // Replace lab() and lch() with computed values where possible
+          // For now, use a simple replacement
+          cssText = convertColorFunctionsInText(cssText);
+          styleTag.textContent = cssText;
+        }
+      } catch (e) {
+        // Skip if we can't process
+      }
+    });
+    
+    // Process all elements and their computed styles
     const clonedElements = clonedDoc.querySelectorAll('*');
     
-    // Process each cloned element
     clonedElements.forEach((clonedEl) => {
       try {
         // Try to find the corresponding element in the original document
@@ -71,129 +227,61 @@ function convertUnsupportedColors(clonedDoc) {
           }
         }
         
-        if (!originalEl) return;
-        
-        const computedStyle = window.getComputedStyle(originalEl);
-        
-        // Convert color properties that might contain lab() or other unsupported functions
-        const colorProperties = [
-          'color',
-          'backgroundColor',
-          'borderColor',
-          'borderTopColor',
-          'borderRightColor',
-          'borderBottomColor',
-          'borderLeftColor',
-          'outlineColor',
-          'textDecorationColor',
-          'columnRuleColor'
-        ];
-        
-        colorProperties.forEach(prop => {
+        if (originalEl) {
+          const computedStyle = window.getComputedStyle(originalEl);
+          
+          // Convert color properties that might contain lab() or other unsupported functions
+          const colorProperties = [
+            'color',
+            'backgroundColor',
+            'borderColor',
+            'borderTopColor',
+            'borderRightColor',
+            'borderBottomColor',
+            'borderLeftColor',
+            'outlineColor',
+            'textDecorationColor',
+            'columnRuleColor'
+          ];
+          
+          colorProperties.forEach(prop => {
+            try {
+              const computedColor = computedStyle[prop];
+              if (computedColor && computedColor !== 'transparent' && computedColor !== 'rgba(0, 0, 0, 0)') {
+                // Apply the computed color (browser has already converted lab() to rgb)
+                clonedEl.style[prop] = computedColor;
+              }
+            } catch (e) {
+              // Skip this property if it fails
+            }
+          });
+          
+          // Handle background properties
           try {
-            const computedColor = computedStyle[prop];
-            if (computedColor && computedColor !== 'transparent' && computedColor !== 'rgba(0, 0, 0, 0)') {
-              // Apply the computed color (browser has already converted lab() to rgb)
-              clonedEl.style[prop] = computedColor;
+            const bgColor = computedStyle.backgroundColor;
+            if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
+              clonedEl.style.backgroundColor = bgColor;
+            }
+            
+            const bgImage = computedStyle.backgroundImage;
+            if (bgImage && bgImage !== 'none') {
+              clonedEl.style.backgroundImage = bgImage;
             }
           } catch (e) {
-            // Skip this property if it fails
+            // Skip background processing if it fails
           }
-        });
-        
-        // Handle background properties that might contain lab() colors
-        try {
-          const bgColor = computedStyle.backgroundColor;
-          if (bgColor && bgColor !== 'transparent' && bgColor !== 'rgba(0, 0, 0, 0)') {
-            clonedEl.style.backgroundColor = bgColor;
-          }
-          
-          const bgImage = computedStyle.backgroundImage;
-          if (bgImage && bgImage !== 'none') {
-            // For gradients with lab() colors, the browser computes them to rgb
-            // So we can use the computed background-image
-            clonedEl.style.backgroundImage = bgImage;
-          }
-        } catch (e) {
-          // Skip background processing if it fails
         }
       } catch (e) {
         // Silently continue if we can't process an element
       }
-    });
-    
-    // Process style attributes that might contain lab() colors
-    clonedElements.forEach((clonedEl) => {
+      
+      // Process inline style attributes
       if (clonedEl.hasAttribute('style')) {
         const styleAttr = clonedEl.getAttribute('style');
         if (styleAttr && (styleAttr.includes('lab(') || styleAttr.includes('lch('))) {
-          try {
-            // Try to find original element
-            let originalEl = null;
-            if (clonedEl.id) {
-              originalEl = document.getElementById(clonedEl.id);
-            }
-            if (!originalEl) {
-              try {
-                const selector = getElementSelector(clonedEl);
-                if (selector) {
-                  originalEl = document.querySelector(selector);
-                }
-              } catch (e) {
-                // Continue without original element
-              }
-            }
-            
-            if (originalEl) {
-              const computedStyle = window.getComputedStyle(originalEl);
-              // Replace style attribute with computed values for color properties
-              const styleObj = {};
-              styleAttr.split(';').forEach(declaration => {
-                const colonIndex = declaration.indexOf(':');
-                if (colonIndex > 0) {
-                  const prop = declaration.substring(0, colonIndex).trim();
-                  const value = declaration.substring(colonIndex + 1).trim();
-                  if (prop && value && (value.includes('lab(') || value.includes('lch('))) {
-                    const camelProp = prop.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-                    try {
-                      const computedValue = computedStyle[camelProp];
-                      if (computedValue) {
-                        styleObj[prop] = computedValue;
-                      }
-                    } catch (e) {
-                      // Keep original value if computed fails
-                      styleObj[prop] = value;
-                    }
-                  } else if (prop && value) {
-                    styleObj[prop] = value;
-                  }
-                }
-              });
-              
-              // Rebuild style attribute
-              const newStyle = Object.entries(styleObj)
-                .map(([k, v]) => `${k}: ${v}`)
-                .join('; ');
-              clonedEl.setAttribute('style', newStyle);
-            } else {
-              // If we can't find the original element, remove lab() colors from style
-              const cleanedStyle = styleAttr
-                .replace(/lab\([^)]+\)/g, 'rgb(128, 128, 128)') // Fallback to gray
-                .replace(/lch\([^)]+\)/g, 'rgb(128, 128, 128)');
-              clonedEl.setAttribute('style', cleanedStyle);
-            }
-          } catch (e) {
-            // If conversion fails, try to clean the style attribute
-            try {
-              const cleanedStyle = styleAttr
-                .replace(/lab\([^)]+\)/g, 'rgb(128, 128, 128)')
-                .replace(/lch\([^)]+\)/g, 'rgb(128, 128, 128)');
-              clonedEl.setAttribute('style', cleanedStyle);
-            } catch (e2) {
-              // Last resort: remove the style attribute
-              clonedEl.removeAttribute('style');
-            }
-          }
+          // Clean the style attribute
+          const cleanedStyle = convertColorFunctionsInText(styleAttr);
+          clonedEl.setAttribute('style', cleanedStyle);
         }
       }
     });
@@ -204,12 +292,15 @@ function convertUnsupportedColors(clonedDoc) {
 }
 
 export async function captureScreenshot() {
-  try {
-    const widgetElements = document.querySelectorAll('.br-widget, .br-trigger-btn');
-    widgetElements.forEach(el => {
-      if (el) el.style.display = 'none';
-    });
+  const widgetElements = document.querySelectorAll('.br-widget, .br-trigger-btn');
+  widgetElements.forEach(el => {
+    if (el) el.style.display = 'none';
+  });
 
+  // Apply computed styles as inline styles to convert lab() colors
+  const originalStyles = applyComputedStylesAsInline();
+
+  try {
     const canvas = await html2canvas(document.body, {
       allowTaint: true,
       useCORS: true,
@@ -221,7 +312,7 @@ export async function captureScreenshot() {
       scrollY: -window.scrollY,
       scrollX: -window.scrollX,
       onclone: (clonedDoc) => {
-        // Convert unsupported color functions before html2canvas processes them
+        // Convert unsupported color functions in cloned document
         convertUnsupportedColors(clonedDoc);
       }
     });
@@ -229,6 +320,9 @@ export async function captureScreenshot() {
     widgetElements.forEach(el => {
       if (el) el.style.display = '';
     });
+    
+    // Restore original styles
+    restoreOriginalStyles(originalStyles);
 
     return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
@@ -240,21 +334,33 @@ export async function captureScreenshot() {
       }, 'image/png');
     });
   } catch (error) {
-    const widgetElements = document.querySelectorAll('.br-widget, .br-trigger-btn');
     widgetElements.forEach(el => {
       if (el) el.style.display = '';
     });
+    
+    // Restore original styles even on error
+    restoreOriginalStyles(originalStyles);
+    
+    // If error is related to lab() color parsing, provide a more helpful error
+    if (error.message && (error.message.includes('lab') || error.message.includes('lch'))) {
+      console.warn('Screenshot capture failed due to unsupported color functions.');
+      throw new Error('Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). Please use standard color formats (rgb, hex, hsl) for better compatibility.');
+    }
+    
     throw error;
   }
 }
 
 export async function captureScreenshotArea(rect) {
-  try {
-    const widgetElements = document.querySelectorAll('.br-widget, .br-trigger-btn');
-    widgetElements.forEach(el => {
-      if (el) el.style.display = 'none';
-    });
+  const widgetElements = document.querySelectorAll('.br-widget, .br-trigger-btn');
+  widgetElements.forEach(el => {
+    if (el) el.style.display = 'none';
+  });
 
+  // Apply computed styles as inline styles to convert lab() colors
+  const originalStyles = applyComputedStylesAsInline();
+
+  try {
     // Capture the full viewport
     // With scrollY: -window.scrollY, html2canvas captures the viewport
     // The canvas dimensions should match window.innerWidth/innerHeight
@@ -270,7 +376,7 @@ export async function captureScreenshotArea(rect) {
       scrollX: -window.scrollX,
       scale: 1,
       onclone: (clonedDoc) => {
-        // Convert unsupported color functions before html2canvas processes them
+        // Convert unsupported color functions in cloned document
         convertUnsupportedColors(clonedDoc);
       }
     });
@@ -278,6 +384,9 @@ export async function captureScreenshotArea(rect) {
     widgetElements.forEach(el => {
       if (el) el.style.display = '';
     });
+    
+    // Restore original styles
+    restoreOriginalStyles(originalStyles);
 
     // Calculate scale factors
     // The canvas might be scaled by devicePixelRatio or other factors
@@ -320,10 +429,19 @@ export async function captureScreenshotArea(rect) {
       }, 'image/png');
     });
   } catch (error) {
-    const widgetElements = document.querySelectorAll('.br-widget, .br-trigger-btn');
     widgetElements.forEach(el => {
       if (el) el.style.display = '';
     });
+    
+    // Restore original styles even on error
+    restoreOriginalStyles(originalStyles);
+    
+    // If error is related to lab() color parsing, provide a more helpful error
+    if (error.message && (error.message.includes('lab') || error.message.includes('lch'))) {
+      console.warn('Screenshot capture failed due to unsupported color functions.');
+      throw new Error('Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). Please use standard color formats (rgb, hex, hsl) for better compatibility.');
+    }
+    
     throw error;
   }
 }
