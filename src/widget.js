@@ -1,8 +1,8 @@
-import { injectStyles } from './utils/styles';
 import ConsoleLogger from './utils/logger';
 import NetworkMonitor from './utils/network';
 import { getSystemInfo } from './utils/system';
 import { captureScreenshot, captureScreenshotArea } from './utils/screenshot';
+import { injectStyles as injectBaseStyles } from './utils/styles';
 
 class BugReporter {
   constructor() {
@@ -33,6 +33,44 @@ class BugReporter {
       modalCancelText: 'Cancel',
       modalSubmitButtonColor: '#ffffff',
       modalCancelButtonColor: '#6c757d',
+      // Additional customizable colors with sensible defaults
+      buttonIconColor: '#ffffff',
+      buttonShadowHover: '0 6px 16px rgba(0, 0, 0, 0.2)',
+      modalBorderColor: '#e1e5e9',
+      modalDisabledButtonColor: '#cccccc',
+      modalCancelButtonBackground: 'transparent',
+      messageBackgroundColor: '#f8f9fa',
+      messageTextColor: '#333',
+      messageBorderColor: '#dee2e6',
+      messageInfoBackground: '#d1ecf1',
+      messageInfoText: '#0c5460',
+      messageInfoBorder: '#bee5eb',
+      messageErrorBackground: '#f8d7da',
+      messageErrorText: '#721c24',
+      messageErrorBorder: '#f5c6cb',
+      messageSuccessBackground: '#d4edda',
+      messageSuccessText: '#155724',
+      messageSuccessBorder: '#c3e6cb',
+      selectionOverlayColor: 'rgba(0, 0, 0, 0.7)',
+      selectionBorderColor: '#667eea',
+      selectionInfoBackground: 'rgba(0, 0, 0, 0.8)',
+      selectionInfoText: 'white',
+      overlayColor: 'rgba(0, 0, 0, 0.5)',
+      toolbarBackgroundColor: '#667eea',
+      toolbarButtonBackground: 'rgba(255, 255, 255, 0.2)',
+      toolbarButtonColor: 'white',
+      toolbarButtonHoverBackground: 'rgba(255, 255, 255, 0.3)',
+      toolbarButtonDisabledBackground: 'rgba(255, 255, 255, 0.1)',
+      toolbarButtonActiveBackground: 'rgba(255, 255, 255, 0.4)',
+      toolbarButtonActiveShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+      colorButtonBackground: '#ef4444',
+      colorButtonBorder: 'rgba(255, 255, 255, 0.3)',
+      colorButtonHoverBorder: 'rgba(255, 255, 255, 0.6)',
+      colorButtonActiveBorder: '#ffffff',
+      colorButtonActiveShadow: '0 0 0 2px rgba(255, 255, 255, 0.5)',
+      textAnnotationBackground: 'rgba(255, 255, 255, 0.8)',
+      textAnnotationColor: '#ef4444',
+      textAnnotationBorder: 'transparent',
       // Screenshot capture mode: 'selection' (area selection) or 'full' (full viewport)
       screenshotMode: 'selection'
     };
@@ -77,13 +115,16 @@ class BugReporter {
     this.logger.startIntercepting();
     this.networkMonitor.startMonitoring();
 
-    // Inject inline styles instead of loading CSS file
-    injectStyles();
+    // Inject base styles first
+    injectBaseStyles();
+    // Inject custom styles
+    this.injectStyles();
     this.injectUI();
     this.attachEventListeners();
   }
 
   injectStyles() {
+    console.log('BugReporter: Injecting styles with config:', this.config);
     const style = document.createElement('style');
     style.id = 'br-custom-styles';
     
@@ -100,6 +141,12 @@ class BugReporter {
         background: ${this.config.buttonColor} !important;
         box-shadow: ${this.config.buttonShadow} !important;
         font-size: ${Math.floor(this.config.buttonSize * 0.4)}px !important;
+        color: ${this.config.buttonIconColor} !important;
+      }
+      
+      .br-trigger-btn:hover {
+        transform: scale(1.1) !important;
+        box-shadow: ${this.config.buttonShadowHover} !important;
       }
       
       .br-header {
@@ -107,7 +154,24 @@ class BugReporter {
         color: ${this.config.modalHeaderTextColor} !important;
       }
       
+      .br-header h2 {
+        color: ${this.config.modalHeaderTextColor} !important;
+      }
+      
+      .br-header .br-close-btn {
+        color: ${this.config.modalHeaderTextColor} !important;
+      }
+      
+      .br-header .br-close-btn:hover {
+        background: ${this.hexToRgba(this.config.modalHeaderTextColor, 0.1)} !important;
+      }
+      
       .br-modal {
+        background: ${this.config.modalBodyColor} !important;
+        color: ${this.config.modalBodyTextColor} !important;
+      }
+      
+      .br-body {
         background: ${this.config.modalBodyColor} !important;
         color: ${this.config.modalBodyTextColor} !important;
       }
@@ -119,6 +183,7 @@ class BugReporter {
       .br-form-group textarea {
         color: ${this.config.modalDescriptionTextColor} !important;
         background: ${this.config.modalBodyColor} !important;
+        border-color: ${this.config.modalBorderColor} !important;
       }
       
       .br-form-group textarea::placeholder {
@@ -127,6 +192,12 @@ class BugReporter {
       
       .br-form-group textarea:focus {
         border-color: ${this.config.modalPrimaryColor} !important;
+        box-shadow: 0 0 0 3px ${this.hexToRgba(this.config.modalPrimaryColor, 0.1)} !important;
+      }
+      
+      .br-footer {
+        background: ${this.config.modalBodyColor} !important;
+        border-top-color: ${this.config.modalBorderColor} !important;
       }
       
       .br-btn-submit {
@@ -138,14 +209,118 @@ class BugReporter {
         box-shadow: 0 4px 12px ${this.hexToRgba(this.config.modalPrimaryColor, 0.4)} !important;
       }
       
+      .br-btn-submit:disabled {
+        background: ${this.config.modalDisabledButtonColor} !important;
+        cursor: not-allowed !important;
+        transform: none !important;
+        box-shadow: none !important;
+      }
+      
       .br-btn-cancel {
-        background: transparent !important;
+        background: ${this.config.modalCancelButtonBackground} !important;
         color: ${this.config.modalCancelButtonColor} !important;
         border: 1px solid ${this.config.modalCancelButtonColor} !important;
       }
       
       .br-btn-cancel:hover {
         background: ${this.hexToRgba(this.config.modalCancelButtonColor, 0.1)} !important;
+      }
+      
+      .br-message {
+        background: ${this.config.messageBackgroundColor} !important;
+        color: ${this.config.messageTextColor} !important;
+        border: 1px solid ${this.config.messageBorderColor} !important;
+      }
+      
+      .br-message-info {
+        background: ${this.config.messageInfoBackground} !important;
+        color: ${this.config.messageInfoText} !important;
+        border: 1px solid ${this.config.messageInfoBorder} !important;
+      }
+      
+      .br-message-error {
+        background: ${this.config.messageErrorBackground} !important;
+        color: ${this.config.messageErrorText} !important;
+        border: 1px solid ${this.config.messageErrorBorder} !important;
+      }
+      
+      .br-message-success {
+        background: ${this.config.messageSuccessBackground} !important;
+        color: ${this.config.messageSuccessText} !important;
+        border: 1px solid ${this.config.messageSuccessBorder} !important;
+      }
+      
+      .br-selection-overlay {
+        background: ${this.config.selectionOverlayColor} !important;
+      }
+      
+      .br-selection-area {
+        border-color: ${this.config.selectionBorderColor} !important;
+        background: ${this.hexToRgba(this.config.selectionBorderColor, 0.1)} !important;
+        box-shadow: 0 0 0 1px ${this.hexToRgba(this.config.selectionBorderColor, 0.3)} !important;
+      }
+      
+      .br-crosshair-h, .br-crosshair-v {
+        background: ${this.config.crosshairColor} !important;
+      }
+      
+      .br-selection-info {
+        background: ${this.config.selectionInfoBackground} !important;
+        color: ${this.config.selectionInfoText} !important;
+      }
+      
+      .br-overlay {
+        background: ${this.config.overlayColor} !important;
+      }
+      
+      .br-screenshot-preview {
+        border-color: ${this.config.modalBorderColor} !important;
+      }
+      
+      .br-screenshot-toolbar {
+        background: ${this.config.toolbarBackgroundColor} !important;
+      }
+      
+      .br-toolbar-btn {
+        background: ${this.config.toolbarButtonBackground} !important;
+        color: ${this.config.toolbarButtonColor} !important;
+      }
+      
+      .br-toolbar-btn:hover {
+        background: ${this.config.toolbarButtonHoverBackground} !important;
+      }
+      
+      .br-toolbar-btn.active {
+        background: ${this.config.toolbarButtonActiveBackground} !important;
+        box-shadow: ${this.config.toolbarButtonActiveShadow} !important;
+      }
+      
+      .br-toolbar-btn:disabled {
+        background: ${this.config.toolbarButtonDisabledBackground} !important;
+      }
+      
+      .br-color-btn {
+        border-color: ${this.config.colorButtonBorder} !important;
+      }
+      
+      .br-color-btn:hover {
+        transform: scale(1.1) !important;
+        border-color: ${this.config.colorButtonHoverBorder} !important;
+      }
+      
+      .br-color-btn.active {
+        border-color: ${this.config.colorButtonActiveBorder} !important;
+        box-shadow: ${this.config.colorButtonActiveShadow} !important;
+      }
+      
+      .br-text-annotation {
+        background: ${this.config.textAnnotationBackground} !important;
+        border-color: ${this.config.textAnnotationBorder} !important;
+      }
+      
+      .br-text-annotation:focus {
+        border-color: ${this.config.modalPrimaryColor} !important;
+        box-shadow: 0 0 0 2px ${this.hexToRgba(this.config.modalPrimaryColor, 0.2)} !important;
       }
     `;
     

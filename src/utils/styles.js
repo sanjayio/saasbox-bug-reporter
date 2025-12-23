@@ -20,23 +20,19 @@ export function injectStyles() {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 999998;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.2s, box-shadow 0.2s;
   font-size: 24px;
-  color: white;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .br-trigger-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .br-widget {
@@ -60,14 +56,13 @@ export function injectStyles() {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
   z-index: 1000000;
   backdrop-filter: blur(2px);
 }
 
 .br-selection-area {
   position: absolute;
-  border: 2px solid #667eea;
+  border: 2px solid;
   background: rgba(102, 126, 234, 0.1);
   box-shadow: 0 0 0 1px rgba(102, 126, 234, 0.3);
   display: none;
@@ -75,7 +70,6 @@ export function injectStyles() {
 
 .br-crosshair-h, .br-crosshair-v {
   position: absolute;
-  background: rgba(102, 126, 234, 0.8);
   pointer-events: none;
 }
 
@@ -96,8 +90,6 @@ export function injectStyles() {
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 14px;
@@ -110,7 +102,6 @@ export function injectStyles() {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
   z-index: 999999;
 }
 
@@ -122,7 +113,6 @@ export function injectStyles() {
   width: 90%;
   max-width: 600px;
   max-height: 80vh;
-  background: white;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -130,8 +120,6 @@ export function injectStyles() {
 }
 
 .br-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
   padding: 20px;
   display: flex;
   justify-content: space-between;
@@ -147,7 +135,6 @@ export function injectStyles() {
 .br-close-btn {
   background: none;
   border: none;
-  color: white;
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -158,10 +145,6 @@ export function injectStyles() {
   justify-content: center;
   border-radius: 4px;
   transition: background-color 0.2s;
-}
-
-.br-close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .br-body {
@@ -185,7 +168,7 @@ export function injectStyles() {
   width: 100%;
   min-height: 120px;
   padding: 12px;
-  border: 2px solid #e1e5e9;
+  border: 2px solid;
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
@@ -195,13 +178,11 @@ export function injectStyles() {
 
 .br-form-group textarea:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .br-footer {
   padding: 20px;
-  border-top: 1px solid #e1e5e9;
+  border-top: 1px solid;
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -218,30 +199,16 @@ export function injectStyles() {
 }
 
 .br-btn-submit {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.br-btn-submit:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
   transform: translateY(-1px);
 }
 
 .br-btn-submit:disabled {
-  background: #ccc;
   cursor: not-allowed;
   transform: none;
-  box-shadow: none;
 }
 
 .br-btn-cancel {
-  background: #f8f9fa;
-  color: #6c757d;
-  border: 1px solid #dee2e6;
-}
-
-.br-btn-cancel:hover {
-  background: #e9ecef;
+  border: 1px solid;
 }
 
 .br-loading {
@@ -264,35 +231,17 @@ export function injectStyles() {
   margin-bottom: 16px;
   font-size: 14px;
   font-weight: 500;
-}
-
-.br-message-info {
-  background: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
-}
-
-.br-message-error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.br-message-success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  border: 1px solid;
 }
 
 .br-screenshot-preview {
   margin-bottom: 20px;
-  border: 2px solid #e1e5e9;
+  border: 2px solid;
   border-radius: 8px;
   overflow: hidden;
 }
 
 .br-screenshot-toolbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 8px;
   display: flex;
   gap: 4px;
@@ -301,9 +250,7 @@ export function injectStyles() {
 }
 
 .br-toolbar-btn {
-  background: rgba(255, 255, 255, 0.2);
   border: none;
-  color: white;
   padding: 8px;
   border-radius: 4px;
   cursor: pointer;
@@ -316,19 +263,12 @@ export function injectStyles() {
 }
 
 .br-toolbar-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
   transform: translateY(-1px);
 }
 
 .br-toolbar-btn:disabled {
-  background: rgba(255, 255, 255, 0.1);
   cursor: not-allowed;
   transform: none;
-}
-
-.br-toolbar-btn.active {
-  background: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .br-color-selector {
@@ -362,21 +302,14 @@ export function injectStyles() {
 .br-color-btn {
   width: 24px;
   height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .br-color-btn:hover {
   transform: scale(1.1);
-  border-color: rgba(255, 255, 255, 0.6);
-}
-
-.br-color-btn.active {
-  border-color: #ffffff;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 .br-screenshot-container {
@@ -405,25 +338,18 @@ export function injectStyles() {
 
 .br-text-annotation {
   position: absolute;
-  color: #ef4444;
   font-size: 16px;
   font-weight: bold;
   cursor: text;
   user-select: text;
   z-index: 11;
   padding: 4px 8px;
-  background: rgba(255, 255, 255, 0.8);
   border-radius: 4px;
   min-width: 40px;
   min-height: 20px;
   outline: none;
-  border: 1px solid transparent;
+  border: 1px solid;
   transition: border-color 0.2s;
-}
-
-.br-text-annotation:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 /* Dark mode support - removed to allow custom colors */
