@@ -1,4 +1,4 @@
-import './styles.css';
+import { injectStyles } from './utils/styles';
 import ConsoleLogger from './utils/logger';
 import NetworkMonitor from './utils/network';
 import { getSystemInfo } from './utils/system';
@@ -23,11 +23,16 @@ class BugReporter {
       modalTitle: 'Report a Bug',
       modalHeaderColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       modalHeaderTextColor: '#ffffff',
-      modalPrimaryColor: '#667eea',
+      modalBodyColor: '#ffffff',
+      modalBodyTextColor: '#333333',
       modalDescriptionLabel: 'Describe the issue',
       modalDescriptionPlaceholder: 'Please describe what went wrong...',
+      modalDescriptionTextColor: '#333333',
+      modalDescriptionPlaceholderColor: '#999999',
       modalSubmitText: 'Submit Report',
       modalCancelText: 'Cancel',
+      modalSubmitButtonColor: '#ffffff',
+      modalCancelButtonColor: '#6c757d',
       // Screenshot capture mode: 'selection' (area selection) or 'full' (full viewport)
       screenshotMode: 'selection'
     };
@@ -72,7 +77,8 @@ class BugReporter {
     this.logger.startIntercepting();
     this.networkMonitor.startMonitoring();
 
-    this.injectStyles();
+    // Inject inline styles instead of loading CSS file
+    injectStyles();
     this.injectUI();
     this.attachEventListeners();
   }
@@ -101,16 +107,45 @@ class BugReporter {
         color: ${this.config.modalHeaderTextColor} !important;
       }
       
+      .br-modal {
+        background: ${this.config.modalBodyColor} !important;
+        color: ${this.config.modalBodyTextColor} !important;
+      }
+      
+      .br-form-group label {
+        color: ${this.config.modalDescriptionTextColor} !important;
+      }
+      
+      .br-form-group textarea {
+        color: ${this.config.modalDescriptionTextColor} !important;
+        background: ${this.config.modalBodyColor} !important;
+      }
+      
+      .br-form-group textarea::placeholder {
+        color: ${this.config.modalDescriptionPlaceholderColor} !important;
+      }
+      
       .br-form-group textarea:focus {
         border-color: ${this.config.modalPrimaryColor} !important;
       }
       
       .br-btn-submit {
         background: ${this.config.modalHeaderColor} !important;
+        color: ${this.config.modalSubmitButtonColor} !important;
       }
       
       .br-btn-submit:hover {
         box-shadow: 0 4px 12px ${this.hexToRgba(this.config.modalPrimaryColor, 0.4)} !important;
+      }
+      
+      .br-btn-cancel {
+        background: transparent !important;
+        color: ${this.config.modalCancelButtonColor} !important;
+        border: 1px solid ${this.config.modalCancelButtonColor} !important;
+      }
+      
+      .br-btn-cancel:hover {
+        background: ${this.hexToRgba(this.config.modalCancelButtonColor, 0.1)} !important;
       }
     `;
     
@@ -193,24 +228,10 @@ class BugReporter {
                   <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
                 </svg>
               </button>
-              <div class="br-color-dropdown">
-                <button class="br-toolbar-btn br-color-dropdown-btn" title="Select color">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/>
-                    <circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/>
-                    <circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/>
-                    <circle cx="11.5" cy="11.5" r=".5" fill="currentColor"/>
-                    <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
-                  </svg>
-                </button>
-                <div class="br-color-picker">
-                  <button class="br-color-btn" data-color="red" style="background: #ef4444;" title="Red"></button>
-                  <button class="br-color-btn" data-color="blue" style="background: #3b82f6;" title="Blue"></button>
-                  <button class="br-color-btn" data-color="green" style="background: #10b981;" title="Green"></button>
-                  <button class="br-color-btn" data-color="yellow" style="background: #f59e0b;" title="Yellow"></button>
-                  <button class="br-color-btn" data-color="white" style="background: #ffffff; border: 1px solid #ddd;" title="White"></button>
-                  <button class="br-color-btn" data-color="black" style="background: #000000;" title="Black"></button>
-                </div>
+              <div class="br-color-selector">
+                <button class="br-color-btn" data-color="red" style="background: #ef4444;" title="Red"></button>
+                <button class="br-color-btn" data-color="green" style="background: #00ff00;" title="Green"></button>
+                <button class="br-color-btn" data-color="blue" style="background: #3b82f6;" title="Blue"></button>
               </div>
             </div>
             <div class="br-screenshot-container">
@@ -258,8 +279,6 @@ class BugReporter {
       undoBtn: widget.querySelector('.br-undo-btn'),
       redoBtn: widget.querySelector('.br-redo-btn'),
       clearBtn: widget.querySelector('.br-clear-btn'),
-      colorDropdownBtn: widget.querySelector('.br-color-dropdown-btn'),
-      colorPicker: widget.querySelector('.br-color-picker'),
       colorBtns: widget.querySelectorAll('.br-color-btn'),
       body: widget.querySelector('.br-body')
     };
@@ -286,22 +305,18 @@ class BugReporter {
     this.elements.redoBtn.addEventListener('click', () => this.redo());
     this.elements.clearBtn.addEventListener('click', () => this.clearAllAnnotations());
     
-    // Color dropdown
-    if (this.elements.colorDropdownBtn) {
-      this.elements.colorDropdownBtn.addEventListener('click', (e) => {
+// Color buttons - use event delegation
+    this.elements.widget.addEventListener('click', (e) => {
+      const target = e.target.closest('.br-color-btn');
+      if (target) {
         e.stopPropagation();
-        this.toggleColorDropdown();
-      });
-    }
-    
-    this.elements.colorBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.selectedColor = e.target.dataset.color;
-        this.elements.colorBtns.forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        this.closeColorDropdown();
-      });
+        this.selectedColor = target.dataset.color;
+        
+        // Update active states
+        const allColorBtns = this.elements.widget.querySelectorAll('.br-color-btn');
+        allColorBtns.forEach(b => b.classList.remove('active'));
+        target.classList.add('active');
+      }
     });
     
     // Set initial active color
@@ -309,13 +324,7 @@ class BugReporter {
       this.elements.colorBtns[0].classList.add('active');
     }
     
-    // Close dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (this.elements.colorPicker && !this.elements.colorPicker.contains(e.target) && 
-          this.elements.colorDropdownBtn && !this.elements.colorDropdownBtn.contains(e.target)) {
-        this.closeColorDropdown();
-      }
-    });
+    
 
     // Screenshot container events for arrow drawing
     if (this.elements.screenshotContainer) {
@@ -592,7 +601,7 @@ class BugReporter {
     this.elements.arrowBtn.classList.remove('active');
     this.elements.textBtn.classList.remove('active');
     this.elements.freehandBtn.classList.remove('active');
-    this.closeColorDropdown();
+    
     
     if (this.screenshotBlob) {
       URL.revokeObjectURL(this.elements.screenshotImg.src);
@@ -725,30 +734,9 @@ class BugReporter {
     }
   }
 
-  toggleColorDropdown() {
-    if (this.elements.colorPicker && this.elements.colorDropdownBtn) {
-      const isShowing = this.elements.colorPicker.classList.contains('br-show');
-      
-      if (isShowing) {
-        this.closeColorDropdown();
-      } else {
-        // Calculate position for fixed dropdown
-        const btnRect = this.elements.colorDropdownBtn.getBoundingClientRect();
-        this.elements.colorPicker.style.top = `${btnRect.bottom + 8}px`;
-        this.elements.colorPicker.style.left = `${btnRect.left}px`;
-        
-        this.elements.colorPicker.classList.add('br-show');
-        this.elements.colorDropdownBtn.classList.add('active');
-      }
-    }
-  }
+  
 
-  closeColorDropdown() {
-    if (this.elements.colorPicker) {
-      this.elements.colorPicker.classList.remove('br-show');
-      this.elements.colorDropdownBtn.classList.remove('active');
-    }
-  }
+  
 
   handleScreenshotMouseDown(e) {
     if (!this.elements.screenshotContainer) return;
@@ -946,7 +934,7 @@ class BugReporter {
       const colorMap = {
         red: '#ef4444',
         blue: '#3b82f6',
-        green: '#10b981',
+        green: '#00ff00',
         yellow: '#f59e0b',
         white: '#ffffff',
         black: '#000000'
@@ -978,7 +966,7 @@ class BugReporter {
       const colorMap = {
         red: '#ef4444',
         blue: '#3b82f6',
-        green: '#10b981',
+        green: '#00ff00',
         yellow: '#f59e0b',
         white: '#ffffff',
         black: '#000000'
@@ -1163,14 +1151,14 @@ class BugReporter {
         const scaleX = img.width / containerRect.width;
         const scaleY = img.height / containerRect.height;
         
-        const colorMap = {
-          red: '#ef4444',
-          blue: '#3b82f6',
-          green: '#10b981',
-          yellow: '#f59e0b',
-          white: '#ffffff',
-          black: '#000000'
-        };
+const colorMap = {
+        red: '#ef4444',
+        blue: '#3b82f6',
+        green: '#00ff00',
+        yellow: '#f59e0b',
+        white: '#ffffff',
+        black: '#000000'
+      };
         
         // Draw freehand paths
         this.freehandPaths.forEach(path => {
@@ -1348,14 +1336,14 @@ class BugReporter {
 
   createTextAnnotation(x, y) {
     const textId = Date.now();
-    const colorMap = {
-      red: '#ef4444',
-      blue: '#3b82f6',
-      green: '#10b981',
-      yellow: '#f59e0b',
-      white: '#ffffff',
-      black: '#000000'
-    };
+const colorMap = {
+        red: '#ef4444',
+        blue: '#3b82f6',
+        green: '#00ff00',
+        yellow: '#f59e0b',
+        white: '#ffffff',
+        black: '#000000'
+      };
     const color = colorMap[this.selectedColor] || colorMap.red;
     
     const textAnnotation = {
@@ -1483,7 +1471,7 @@ class BugReporter {
       const colorMap = {
         red: '#ef4444',
         blue: '#3b82f6',
-        green: '#10b981',
+        green: '#00ff00',
         yellow: '#f59e0b',
         white: '#ffffff',
         black: '#000000'

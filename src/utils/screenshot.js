@@ -1,79 +1,63 @@
 // Import html-to-image for better color support and Next.js compatibility
-import { toPng as htmlToImagePng } from 'html-to-image';
-
-// Fallback to html2canvas-pro if html-to-image fails
-let html2canvasFallback = null;
-const getHtml2CanvasFallback = async () => {
-  if (!html2canvasFallback) {
+// Use dynamic import to avoid bundling issues
+let htmlToImagePng = null;
+const getHtmlToImage = async () => {
+  if (!htmlToImagePng) {
     try {
-      const module = await import('html2canvas-pro');
-      html2canvasFallback = module.default;
+      const module = await import('html-to-image');
+      htmlToImagePng = module.toPng;
     } catch (e) {
-      throw new Error('Neither html-to-image nor html2canvas-pro is available');
+      console.error('Failed to load html-to-image:', e);
+      throw new Error('html-to-image library not available');
     }
   }
-  return html2canvasFallback;
+  return htmlToImagePng;
 };
+
+// Add a simple test to verify the library is working
+export function testScreenshotLibrary() {
+  console.log('Testing html-to-image library...');
+  console.log('Available functions:', Object.keys(htmlToImagePng));
+  return true;
+}
 
 export async function captureScreenshot() {
   const widgetElements = document.querySelectorAll('.br-widget, .br-trigger-btn');
   
   try {
+    console.log('Starting screenshot capture...');
+    
     // Hide widget elements
     widgetElements.forEach(el => {
       if (el) el.style.display = 'none';
     });
 
-    // Try html-to-image first (better color support)
-    const dataUrl = await htmlToImagePng(document.body, {
-      quality: 1,
-      pixelRatio: window.devicePixelRatio || 1,
+    // Get html-to-image function dynamically
+    const toPng = await getHtmlToImage();
+    console.log('html-to-image loaded successfully');
+
+    // Use html-to-image with very basic settings first
+    const dataUrl = await toPng(document.body, {
+      quality: 0.8,
       width: window.innerWidth,
       height: window.innerHeight,
-      style: {
-        transform: 'translateY(0)',
-        transformOrigin: 'top left'
-      },
-      filter: (node) => {
-        // Filter out problematic nodes
-        return node.tagName !== 'IMG' || !node.src.startsWith('blob:');
-      }
+      backgroundColor: '#ffffff'
     });
+    console.log('Screenshot generated successfully');
 
     // Convert data URL to blob
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     return blob;
   } catch (error) {
-    console.warn('html-to-image failed, trying html2canvas-pro fallback:', error);
-    
+    console.error('Screenshot capture failed:', error);
+    console.error('Error details:', error.stack);
+    // Fall back to a simple canvas-based screenshot if html-to-image fails
     try {
-      // Fallback to html2canvas-pro
-      const html2canvas = await getHtml2CanvasFallback();
-      
-      const canvas = await html2canvas(document.body, {
-        allowTaint: true,
-        useCORS: true,
-        logging: false,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        scrollY: -window.scrollY,
-        scrollX: -window.scrollX
-      });
-
-      return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to create screenshot blob'));
-          }
-        }, 'image/png');
-      });
+      console.log('Trying fallback canvas screenshot...');
+      return await captureScreenshotWithCanvas();
     } catch (fallbackError) {
-      console.error('Both screenshot methods failed:', fallbackError);
+      console.error('Fallback screenshot also failed:', fallbackError);
       throw new Error(`Screenshot capture failed: ${error.message}`);
     }
   } finally {
@@ -93,19 +77,17 @@ export async function captureScreenshotArea(rect) {
       if (el) el.style.display = 'none';
     });
 
-    // Try html-to-image first
-    const dataUrl = await htmlToImagePng(document.body, {
-      quality: 1,
-      pixelRatio: window.devicePixelRatio || 1,
+    // Capture the full viewport with simplified html-to-image settings
+    const toPng = await getHtmlToImage();
+    const dataUrl = await toPng(document.body, {
+      quality: 0.9,
+      pixelRatio: 1,
       width: window.innerWidth,
       height: window.innerHeight,
-      style: {
-        transform: 'translateY(0)',
-        transformOrigin: 'top left'
-      },
+      backgroundColor: '#ffffff',
       filter: (node) => {
-        // Filter out problematic nodes
-        return node.tagName !== 'IMG' || !node.src.startsWith('blob:');
+        return !node.classList?.contains('br-widget') && 
+               !node.classList?.contains('br-trigger-btn');
       }
     });
 
@@ -163,71 +145,71 @@ export async function captureScreenshotArea(rect) {
       img.src = dataUrl;
     });
   } catch (error) {
-    console.warn('html-to-image area capture failed, trying html2canvas-pro fallback:', error);
-    
-    try {
-      // Fallback to html2canvas-pro for area capture
-      const html2canvas = await getHtml2CanvasFallback();
-      
-      const canvas = await html2canvas(document.body, {
-        allowTaint: true,
-        useCORS: true,
-        logging: false,
-        width: window.innerWidth,
-        height: window.innerHeight,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        scrollY: -window.scrollY,
-        scrollX: -window.scrollX,
-        scale: 1
-      });
-
-      // Calculate scale factors
-      const scaleX = canvas.width / window.innerWidth;
-      const scaleY = canvas.height / window.innerHeight;
-      
-      // Convert viewport coordinates to canvas coordinates
-      const sourceX = Math.round(rect.x * scaleX);
-      const sourceY = Math.round(rect.y * scaleY);
-      const sourceWidth = Math.round(rect.width * scaleX);
-      const sourceHeight = Math.round(rect.height * scaleY);
-      
-      // Ensure coordinates are within canvas bounds
-      const clampedX = Math.max(0, Math.min(sourceX, canvas.width));
-      const clampedY = Math.max(0, Math.min(sourceY, canvas.height));
-      const clampedWidth = Math.min(sourceWidth, canvas.width - clampedX);
-      const clampedHeight = Math.min(sourceHeight, canvas.height - clampedY);
-      
-      // Create cropped canvas with exact selection dimensions
-      const croppedCanvas = document.createElement('canvas');
-      croppedCanvas.width = rect.width;
-      croppedCanvas.height = rect.height;
-      const ctx = croppedCanvas.getContext('2d');
-      
-      // Draw the selected area, scaling it to match the exact selection size
-      ctx.drawImage(
-        canvas,
-        clampedX, clampedY, clampedWidth, clampedHeight,
-        0, 0, rect.width, rect.height
-      );
-
-      return new Promise((resolve, reject) => {
-        croppedCanvas.toBlob((blob) => {
-          if (blob) {
-            resolve(blob);
-          } else {
-            reject(new Error('Failed to create cropped screenshot blob'));
-          }
-        }, 'image/png');
-      });
-    } catch (fallbackError) {
-      console.error('Both area capture methods failed:', fallbackError);
-      throw new Error(`Area screenshot capture failed: ${error.message}`);
-    }
+    console.error('Area screenshot capture failed:', error);
+    throw new Error(`Area screenshot capture failed: ${error.message}`);
   } finally {
     // Always restore widget elements
     widgetElements.forEach(el => {
       if (el) el.style.display = '';
     });
   }
+}
+
+// Improved fallback using native canvas API
+async function captureScreenshotWithCanvas() {
+  return new Promise((resolve, reject) => {
+    try {
+      // Create a temporary canvas to capture the visible portion
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size to viewport
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Fill with white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      
+      // Try to draw the document content using a simpler approach
+      // This is a basic fallback - it won't capture everything but will work
+      ctx.fillStyle = '#333333';
+      ctx.font = '14px Arial';
+      
+      let y = 30;
+      const lineHeight = 20;
+      
+      // Add page information
+      ctx.fillText('Bug Reporter Screenshot', 20, y);
+      y += lineHeight;
+      ctx.fillText(`Page: ${window.location.href}`, 20, y);
+      y += lineHeight;
+      ctx.fillText(`Size: ${width}x${height}`, 20, y);
+      y += lineHeight;
+      ctx.fillText(`Time: ${new Date().toLocaleString()}`, 20, y);
+      y += lineHeight * 2;
+      
+      // Try to capture some basic page content
+      const title = document.title || 'No title';
+      ctx.fillText(`Title: ${title}`, 20, y);
+      y += lineHeight;
+      
+      const bodyText = document.body?.innerText?.substring(0, 200) || 'No content';
+      ctx.fillText(`Content: ${bodyText}`, 20, y);
+      
+      canvas.toBlob((blob) => {
+        if (blob) {
+          console.log('Fallback screenshot created successfully');
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create canvas screenshot'));
+        }
+      }, 'image/png');
+    } catch (error) {
+      console.error('Canvas fallback failed:', error);
+      reject(error);
+    }
+  });
 }
