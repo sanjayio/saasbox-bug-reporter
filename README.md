@@ -327,42 +327,6 @@ The widget sends a `POST` request with `multipart/form-data` to your configured 
 }
 ```
 
-### Example Backend (Node.js/Express)
-
-```javascript
-const express = require('express');
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
-
-app.post('/api/bug-reporter', upload.single('screenshot'), (req, res) => {
-  const {
-    saasBoxKey,
-    saasBoxSecret,
-    description,
-    consoleLogs,
-    networkRequests,
-    systemInfo
-  } = req.body;
-
-  const screenshot = req.file; // File object
-
-  // Verify credentials
-  if (!verifySaasBoxCredentials(saasBoxKey, saasBoxSecret)) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  // Parse JSON strings
-  const logs = JSON.parse(consoleLogs);
-  const requests = JSON.parse(networkRequests);
-  const system = JSON.parse(systemInfo);
-
-  // Save to database, send to bug tracking system, etc.
-  console.log(`Bug report from SaasBox key: ${saasBoxKey}`);
-  
-  res.json({ success: true, id: 'bug-123' });
-});
-```
-
 ## Data Structure
 
 ### Console Logs
