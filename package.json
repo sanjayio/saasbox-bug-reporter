@@ -1,6 +1,6 @@
 {
   "name": "saasbox-bug-reporter",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Lightweight embeddable bug reporting widget for SaaS applications. Captures screenshots, console logs, network requests, and system information.",
   "main": "dist/bug-reporter.min.js",
   "unpkg": "dist/bug-reporter.min.js",
