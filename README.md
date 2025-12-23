@@ -59,6 +59,32 @@ BugReporter.init({
 });
 ```
 
+#### Next.js Applications
+
+For Next.js apps, import the widget dynamically to avoid SSR issues:
+
+```javascript
+// In your _app.js, layout.js, or a client component
+import { useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+const BugReporter = dynamic(() => import('saasbox-bug-reporter'), { ssr: false });
+
+export default function MyApp({ Component, pageProps }) {
+  useEffect(() => {
+    BugReporter.init({
+      apiEndpoint: 'https://saasbox.app/api/bug-reporter',
+      saasBoxKey: 'YOUR_SAASBOX_KEY',
+      saasBoxSecret: 'YOUR_SAASBOX_SECRET'
+    });
+  }, []);
+
+  return <Component {...pageProps} />;
+}
+```
+
+**Note:** This widget uses `html-to-image` which supports modern CSS color functions like `lab()`, `lch()`, `oklab()`, and `oklch()` that are commonly used in Next.js applications with Tailwind CSS.
+
 That's it! The widget will appear as a floating bug button in the bottom-right corner.
 
 ## API Endpoint
