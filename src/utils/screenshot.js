@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 /**
  * Gets a unique selector for an element to match it between documents
@@ -55,84 +55,144 @@ function convertColorFunctionsInText(text) {
 }
 
 /**
- * Attempts to convert lab()/lch() colors in stylesheet text
- * This is a best-effort approach since we can't always access stylesheet text
+ * Creates a comprehensive override stylesheet by sampling all elements
+ * and applying their computed colors. This overrides lab() colors from Tailwind CSS.
  */
 function convertStylesheetColors() {
   const overrideStyle = document.createElement('style');
   overrideStyle.setAttribute('data-br-color-override', 'true');
   overrideStyle.setAttribute('type', 'text/css');
   
-  const rules = [];
+  const colorMap = new Map(); // Map of selector -> color properties
+  const maxElements = 1000; // Limit to avoid performance issues
+  let elementCount = 0;
   
   try {
-    // Process all accessible stylesheets
-    for (let i = 0; i < document.styleSheets.length; i++) {
+    // Sample all elements and get their computed colors
+    const allElements = document.querySelectorAll('*');
+    
+    for (let i = 0; i < allElements.length && elementCount < maxElements; i++) {
+      const el = allElements[i];
+      
+      // Skip widget elements
+      if (el.classList.contains('br-widget') || el.classList.contains('br-trigger-btn')) {
+        continue;
+      }
+      
       try {
-        const sheet = document.styleSheets[i];
-        if (!sheet.cssRules && !sheet.rules) continue;
+        const computed = window.getComputedStyle(el);
         
-        const cssRules = sheet.cssRules || sheet.rules;
-        for (let j = 0; j < cssRules.length; j++) {
-          try {
-            const rule = cssRules[j];
-            if (rule.style && rule.selectorText) {
-              // Get computed colors for elements matching this selector
-              try {
-                const testElements = document.querySelectorAll(rule.selectorText);
-                if (testElements.length > 0) {
-                  const firstEl = testElements[0];
-                  const computed = window.getComputedStyle(firstEl);
-                  
-                  const colorProps = [
-                    { css: 'color', js: 'color' },
-                    { css: 'background-color', js: 'backgroundColor' },
-                    { css: 'border-color', js: 'borderColor' }
-                  ];
-                  
-                  let ruleParts = [];
-                  colorProps.forEach(({ css, js }) => {
-                    const value = computed[js];
-                    if (value && value !== 'transparent' && value !== 'rgba(0, 0, 0, 0)') {
-                      if (!value.includes('lab(') && !value.includes('lch(')) {
-                        ruleParts.push(`${css}: ${value} !important;`);
-                      }
-                    }
-                  });
-                  
-                  if (ruleParts.length > 0) {
-                    rules.push(`${rule.selectorText} { ${ruleParts.join(' ')} }`);
-                  }
-                }
-              } catch (e) {
-                // Skip if selector is invalid
+        // Build a unique selector for this element
+        let selector = '';
+        if (el.id) {
+          selector = `#${CSS.escape(el.id)}`;
+        } else if (el.className && typeof el.className === 'string') {
+          const classes = el.className.trim().split(/\s+/).filter(c => c && !c.includes('br-'));
+          if (classes.length > 0) {
+            // Use first few classes to avoid overly specific selectors
+            const classSelector = '.' + classes.slice(0, 3).map(c => CSS.escape(c)).join('.');
+            selector = `${el.tagName.toLowerCase()}${classSelector}`;
+          }
+        }
+        
+        if (!selector) {
+          selector = el.tagName.toLowerCase();
+        }
+        
+        // Get computed color values (browser has already converted lab() to rgb)
+        const colorProps = {
+          color: computed.color,
+          backgroundColor: computed.backgroundColor,
+          borderColor: computed.borderColor,
+          borderTopColor: computed.borderTopColor,
+          borderRightColor: computed.borderRightColor,
+          borderBottomColor: computed.borderBottomColor,
+          borderLeftColor: computed.borderLeftColor
+        };
+        
+        // Only store if colors are valid (not lab/lch and not transparent)
+        const validColors = {};
+        Object.entries(colorProps).forEach(([prop, value]) => {
+          if (value && 
+              value !== 'transparent' && 
+              value !== 'rgba(0, 0, 0, 0)' &&
+              !value.includes('lab(') && 
+              !value.includes('lch(')) {
+            validColors[prop] = value;
+          }
+        });
+        
+        if (Object.keys(validColors).length > 0) {
+          // Store or merge with existing selector
+          if (!colorMap.has(selector)) {
+            colorMap.set(selector, validColors);
+            elementCount++;
+          } else {
+            // Merge colors (prefer non-transparent values)
+            const existing = colorMap.get(selector);
+            Object.entries(validColors).forEach(([prop, value]) => {
+              if (!existing[prop] || existing[prop] === 'transparent' || existing[prop] === 'rgba(0, 0, 0, 0)') {
+                existing[prop] = value;
               }
-            }
-          } catch (e) {
-            // Skip rules that can't be accessed (e.g., cross-origin)
-            continue;
+            });
           }
         }
       } catch (e) {
-        // Skip stylesheets that can't be accessed
+        // Skip elements that can't be processed
         continue;
       }
     }
   } catch (e) {
-    console.warn('Failed to process stylesheets:', e);
+    console.warn('Failed to sample elements:', e);
   }
   
-  // Add a global override that forces computed colors
-  // This uses a very high specificity to override lab() colors
-  const globalOverride = `
-    html * {
+  // Build CSS rules from the color map
+  const rules = [];
+  colorMap.forEach((colors, selector) => {
+    try {
+      const ruleParts = [];
+      
+      if (colors.color) {
+        ruleParts.push(`color: ${colors.color} !important;`);
+      }
+      if (colors.backgroundColor) {
+        ruleParts.push(`background-color: ${colors.backgroundColor} !important;`);
+      }
+      if (colors.borderColor) {
+        ruleParts.push(`border-color: ${colors.borderColor} !important;`);
+      }
+      if (colors.borderTopColor) {
+        ruleParts.push(`border-top-color: ${colors.borderTopColor} !important;`);
+      }
+      if (colors.borderRightColor) {
+        ruleParts.push(`border-right-color: ${colors.borderRightColor} !important;`);
+      }
+      if (colors.borderBottomColor) {
+        ruleParts.push(`border-bottom-color: ${colors.borderBottomColor} !important;`);
+      }
+      if (colors.borderLeftColor) {
+        ruleParts.push(`border-left-color: ${colors.borderLeftColor} !important;`);
+      }
+      
+      if (ruleParts.length > 0) {
+        rules.push(`${selector} { ${ruleParts.join(' ')} }`);
+      }
+    } catch (e) {
+      // Skip invalid selectors
+    }
+  });
+  
+  // Add a global fallback that uses computed colors
+  // This ensures any element not explicitly covered still gets computed colors
+  const globalFallback = `
+    *:not(.br-widget):not(.br-trigger-btn):not(.br-widget *) {
       color: inherit !important;
       background-color: inherit !important;
       border-color: inherit !important;
     }
   `;
   
-  overrideStyle.textContent = globalOverride + rules.join('\n');
+  overrideStyle.textContent = globalFallback + '\n' + rules.join('\n');
   document.head.appendChild(overrideStyle);
   
   return overrideStyle;
@@ -152,18 +212,18 @@ function removeColorOverrideStylesheet(overrideStyle) {
 }
 
 /**
- * Wrapper for html2canvas that handles lab() color errors gracefully
+ * Wrapper for html2canvas-pro that handles errors gracefully
+ * html2canvas-pro supports modern color functions like lab() and lch()
  */
 async function safeHtml2canvas(element, options) {
   try {
     return await html2canvas(element, options);
   } catch (error) {
-    // If it's a lab()/lch() color error, provide helpful message
+    // html2canvas-pro should handle lab()/lch() colors, but if we still get errors, provide helpful message
     if (error.message && (error.message.includes('lab') || error.message.includes('lch') || error.message.includes('color function'))) {
       const enhancedError = new Error(
-        'Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). ' +
-        'html2canvas cannot parse these modern color formats. ' +
-        'Please use standard color formats (rgb, hex, hsl) in your CSS, or consider using a CSS preprocessor to convert lab() colors to rgb during build time.'
+        'Screenshot capture failed: Unable to parse CSS color functions. ' +
+        'This may occur with very new CSS features. Please report this issue.'
       );
       enhancedError.originalError = error;
       throw enhancedError;
@@ -345,8 +405,49 @@ export async function captureScreenshot() {
   // Create override stylesheet to replace lab() colors
   const overrideStyle = convertStylesheetColors();
   
+  // Also apply computed colors as inline styles to all elements
+  // This ensures maximum specificity to override lab() colors
+  const originalStyles = new Map();
+  const allElements = document.querySelectorAll('*:not(.br-widget):not(.br-trigger-btn):not(.br-widget *)');
+  const maxInlineElements = 500; // Limit for performance
+  
+  for (let i = 0; i < Math.min(allElements.length, maxInlineElements); i++) {
+    const el = allElements[i];
+    try {
+      const computed = window.getComputedStyle(el);
+      const originalStyle = el.getAttribute('style') || '';
+      originalStyles.set(el, originalStyle);
+      
+      // Apply computed colors as inline styles (highest specificity)
+      const colorProps = ['color', 'backgroundColor', 'borderColor'];
+      let newStyle = originalStyle;
+      
+      colorProps.forEach(prop => {
+        const value = computed[prop];
+        if (value && 
+            value !== 'transparent' && 
+            value !== 'rgba(0, 0, 0, 0)' &&
+            !value.includes('lab(') && 
+            !value.includes('lch(')) {
+          const cssProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
+          // Only add if not already present
+          if (!originalStyle.includes(cssProp + ':')) {
+            newStyle = `${newStyle}; ${cssProp}: ${value}`.trim();
+          }
+        }
+      });
+      
+      if (newStyle !== originalStyle) {
+        el.setAttribute('style', newStyle);
+        el.setAttribute('data-br-temp-style', 'true');
+      }
+    } catch (e) {
+      // Skip elements that can't be processed
+    }
+  }
+  
   // Wait a bit for styles to apply
-  await new Promise(resolve => setTimeout(resolve, 50));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   try {
     const canvas = await safeHtml2canvas(document.body, {
@@ -369,6 +470,22 @@ export async function captureScreenshot() {
       if (el) el.style.display = '';
     });
     
+    // Restore original inline styles
+    originalStyles.forEach((originalStyle, el) => {
+      try {
+        if (el.hasAttribute('data-br-temp-style')) {
+          if (originalStyle) {
+            el.setAttribute('style', originalStyle);
+          } else {
+            el.removeAttribute('style');
+          }
+          el.removeAttribute('data-br-temp-style');
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    });
+    
     // Remove override stylesheet
     removeColorOverrideStylesheet(overrideStyle);
 
@@ -386,13 +503,32 @@ export async function captureScreenshot() {
       if (el) el.style.display = '';
     });
     
+    // Restore original inline styles even on error
+    originalStyles.forEach((originalStyle, el) => {
+      try {
+        if (el.hasAttribute('data-br-temp-style')) {
+          if (originalStyle) {
+            el.setAttribute('style', originalStyle);
+          } else {
+            el.removeAttribute('style');
+          }
+          el.removeAttribute('data-br-temp-style');
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    });
+    
     // Remove override stylesheet even on error
     removeColorOverrideStylesheet(overrideStyle);
     
-    // If error is related to lab() color parsing, try a fallback approach
+    // If error is related to lab() color parsing, provide Tailwind-specific solution
     if (error.message && (error.message.includes('lab') || error.message.includes('lch'))) {
-      console.warn('Screenshot capture failed due to unsupported color functions. The page uses lab()/lch() colors which html2canvas cannot parse. Consider using standard color formats (rgb, hex, hsl) for better compatibility.');
-      throw new Error('Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). Please use standard color formats (rgb, hex, hsl) for better compatibility.');
+      console.warn('Screenshot capture failed: html2canvas cannot parse lab()/lch() colors from Tailwind CSS. Configure Tailwind to use RGB colors or use a build-time converter.');
+      throw new Error(
+        'Screenshot capture failed: html2canvas cannot parse lab()/lch() colors used by Tailwind CSS v3+. ' +
+        'Solution: Configure Tailwind to output RGB colors. See: https://tailwindcss.com/docs/customizing-colors#using-css-variables'
+      );
     }
     
     throw error;
@@ -408,8 +544,47 @@ export async function captureScreenshotArea(rect) {
   // Create override stylesheet to replace lab() colors
   const overrideStyle = convertStylesheetColors();
   
+  // Also apply computed colors as inline styles to all elements
+  const originalStyles = new Map();
+  const allElements = document.querySelectorAll('*:not(.br-widget):not(.br-trigger-btn):not(.br-widget *)');
+  const maxInlineElements = 500; // Limit for performance
+  
+  for (let i = 0; i < Math.min(allElements.length, maxInlineElements); i++) {
+    const el = allElements[i];
+    try {
+      const computed = window.getComputedStyle(el);
+      const originalStyle = el.getAttribute('style') || '';
+      originalStyles.set(el, originalStyle);
+      
+      // Apply computed colors as inline styles (highest specificity)
+      const colorProps = ['color', 'backgroundColor', 'borderColor'];
+      let newStyle = originalStyle;
+      
+      colorProps.forEach(prop => {
+        const value = computed[prop];
+        if (value && 
+            value !== 'transparent' && 
+            value !== 'rgba(0, 0, 0, 0)' &&
+            !value.includes('lab(') && 
+            !value.includes('lch(')) {
+          const cssProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
+          if (!originalStyle.includes(cssProp + ':')) {
+            newStyle = `${newStyle}; ${cssProp}: ${value}`.trim();
+          }
+        }
+      });
+      
+      if (newStyle !== originalStyle) {
+        el.setAttribute('style', newStyle);
+        el.setAttribute('data-br-temp-style', 'true');
+      }
+    } catch (e) {
+      // Skip elements that can't be processed
+    }
+  }
+  
   // Wait a bit for styles to apply
-  await new Promise(resolve => setTimeout(resolve, 50));
+  await new Promise(resolve => setTimeout(resolve, 100));
 
   try {
     // Capture the full viewport
@@ -434,6 +609,22 @@ export async function captureScreenshotArea(rect) {
 
     widgetElements.forEach(el => {
       if (el) el.style.display = '';
+    });
+    
+    // Restore original inline styles
+    originalStyles.forEach((originalStyle, el) => {
+      try {
+        if (el.hasAttribute('data-br-temp-style')) {
+          if (originalStyle) {
+            el.setAttribute('style', originalStyle);
+          } else {
+            el.removeAttribute('style');
+          }
+          el.removeAttribute('data-br-temp-style');
+        }
+      } catch (e) {
+        // Ignore errors
+      }
     });
     
     // Remove override stylesheet
@@ -484,13 +675,32 @@ export async function captureScreenshotArea(rect) {
       if (el) el.style.display = '';
     });
     
+    // Restore original inline styles even on error
+    originalStyles.forEach((originalStyle, el) => {
+      try {
+        if (el.hasAttribute('data-br-temp-style')) {
+          if (originalStyle) {
+            el.setAttribute('style', originalStyle);
+          } else {
+            el.removeAttribute('style');
+          }
+          el.removeAttribute('data-br-temp-style');
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    });
+    
     // Remove override stylesheet even on error
     removeColorOverrideStylesheet(overrideStyle);
     
-    // If error is related to lab() color parsing, provide a more helpful error
+    // If error is related to lab() color parsing, provide Tailwind-specific solution
     if (error.message && (error.message.includes('lab') || error.message.includes('lch'))) {
-      console.warn('Screenshot capture failed due to unsupported color functions. The page uses lab()/lch() colors which html2canvas cannot parse. Consider using standard color formats (rgb, hex, hsl) for better compatibility.');
-      throw new Error('Screenshot capture failed: The page uses unsupported CSS color functions (lab/lch). Please use standard color formats (rgb, hex, hsl) for better compatibility.');
+      console.warn('Screenshot capture failed: html2canvas cannot parse lab()/lch() colors from Tailwind CSS. Configure Tailwind to use RGB colors or use a build-time converter.');
+      throw new Error(
+        'Screenshot capture failed: html2canvas cannot parse lab()/lch() colors used by Tailwind CSS v3+. ' +
+        'Solution: Configure Tailwind to output RGB colors. See: https://tailwindcss.com/docs/customizing-colors#using-css-variables'
+      );
     }
     
     throw error;
