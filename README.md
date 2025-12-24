@@ -646,10 +646,31 @@ npm run serve
 
 ## Browser Compatibility
 
+### Screenshot Capture
+
+The widget uses the browser's native Screen Capture API for accurate screenshot capture (especially when page is scrolled). Browser support:
+
+**Native Screen Capture API (Primary Method):**
+- ✅ Chrome 72+
+- ✅ Edge 79+
+- ✅ Firefox 66+
+- ✅ Safari 13+
+- ✅ Opera 60+
+- ⚠️ Limited mobile browser support
+
+**Fallback Method (modern-screenshot):**
+- Works on all modern browsers
+- Note: May have scroll position issues on some pages
+- Automatically used if native API is unavailable or permission denied
+
+### General Widget Compatibility
+
 - Chrome 60+
 - Firefox 55+
 - Safari 12+
 - Edge 79+
+
+**Note:** When using the native Screen Capture API, users will see a browser permission dialog asking which tab to capture. This is a browser security feature and ensures accurate screenshots.
 
 ## File Size
 

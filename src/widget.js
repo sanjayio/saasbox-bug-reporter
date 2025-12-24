@@ -459,7 +459,7 @@ class BugReporter {
     };
   }
 
-  attachEventListeners() {
+attachEventListeners() {
     this.elements.triggerBtn.addEventListener('click', () => {
       if (this.config.screenshotMode === 'selection') {
         this.startSelectionMode();
@@ -546,7 +546,7 @@ class BugReporter {
     });
   }
 
-  startSelectionMode() {
+startSelectionMode() {
     this.selectionMode = true;
     this.selectionStart = null;
     this.selectionEnd = null;
@@ -569,7 +569,7 @@ class BugReporter {
     this.updateSelectionDisplay();
   }
 
-  handleSelectionStart(e) {
+handleSelectionStart(e) {
     if (!this.selectionMode) return;
     e.preventDefault();
     this.selectionStart = { x: e.clientX, y: e.clientY };
@@ -577,7 +577,7 @@ class BugReporter {
     this.updateSelectionDisplay();
   }
 
-  handleSelectionMove(e) {
+handleSelectionMove(e) {
     if (!this.selectionMode) return;
     this.updateCrosshairs(e.clientX, e.clientY);
     if (this.selectionStart) {

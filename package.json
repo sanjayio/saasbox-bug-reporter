@@ -50,6 +50,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "html-to-image": "^1.11.11"
+    "modern-screenshot": "^4.6.7"
   }
 }
